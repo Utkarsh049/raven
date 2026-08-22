@@ -14,6 +14,8 @@ function inlineMd(s: string) {
 export function compileMarkdownToHtml(src: string): string {
   const text = String(src ?? "");
   if (!text.trim()) return "";
+  // If content is HTML (from Tiptap editor), pass through directly — sanitization happens at render.
+  if (text.trim().startsWith("<")) return text;
   const lines = text.split(/\r?\n/);
   const out: string[] = [];
   let inCode = false;
@@ -102,6 +104,7 @@ export function compileMarkdownToHtml(src: string): string {
       flushList();
       continue;
     }
+    if (listTag === "ul" || listTag === "ol") flushList();
     para.push(line);
   }
   flushPara();

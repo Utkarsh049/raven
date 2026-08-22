@@ -112,22 +112,22 @@ export function ChapterBlocksField(props: { path: string }) {
     [setValue, value],
   );
 
+  const ids = useMemo(() => value.map((r, i) => r.id ?? `row-${i}-${r.blockType}`), [value]);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      const oldIndex = value.findIndex((r) => (r.id ?? String(value.indexOf(r))) === String(active.id));
-      const newIndex = value.findIndex((r) => (r.id ?? String(value.indexOf(r))) === String(over.id));
+      const oldIndex = ids.indexOf(String(active.id));
+      const newIndex = ids.indexOf(String(over.id));
       if (oldIndex === -1 || newIndex === -1) return;
       const next = [...value];
       const [moved] = next.splice(oldIndex, 1);
       next.splice(newIndex, 0, moved);
       setValue(next);
     },
-    [setValue, value],
+    [setValue, value, ids],
   );
-
-  const ids = useMemo(() => value.map((r, i) => r.id ?? `row-${i}-${r.blockType}`), [value]);
 
   return (
     <div className="space-y-3">
@@ -217,21 +217,30 @@ function textFromHtml(html: string) {
     .trim();
 }
 
+function isHtmlContent(value: string): boolean {
+  return value.trim().startsWith("<");
+}
+
+function toEditorHtml(raw: string): string {
+  if (!raw) return "<p></p>";
+  return isHtmlContent(raw) ? raw : htmlFromText(raw);
+}
+
 function TiptapEditor({ path }: { path: string }) {
   const field = useField<string>({ path });
   const raw = (field.value as string) ?? "";
   const editor = useEditor({
     extensions: [StarterKit],
-    content: htmlFromText(raw),
+    content: toEditorHtml(raw),
     onUpdate: ({ editor: ed }) => {
-      field.setValue(textFromHtml(ed.getHTML()) as never);
+      field.setValue(ed.getHTML() as never);
     },
   });
 
   useEffect(() => {
     if (!editor) return;
-    const nextHtml = htmlFromText(raw);
-    if (textFromHtml(editor.getHTML()) !== raw) {
+    const nextHtml = toEditorHtml(raw);
+    if (editor.getHTML() !== nextHtml) {
       editor.commands.setContent(nextHtml, { emitUpdate: false } as never);
     }
   }, [editor, raw]);
@@ -325,14 +334,13 @@ function SupabaseUpload({ urlPath, altPath }: { urlPath: string; altPath: string
       }
       setBusy(true);
       try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const key = `chapters/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("media").upload(key, file, { contentType: file.type, upsert: false });
-        if (upErr) throw new Error(upErr.message);
-        const { data } = supabase.storage.from("media").getPublicUrl(key);
-        urlField.setValue((data.publicUrl ?? "") as never);
+        const form = new FormData();
+        form.set("file", file);
+        const res = await fetch("/api/media-upload", { method: "POST", body: form });
+        const json = (await res.json()) as { url?: string; error?: string };
+        if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`);
+        if (!json.url) throw new Error("Upload returned no URL.");
+        urlField.setValue((json.url ?? "") as never);
         if (!(altField.value as string)?.trim()) {
           const base = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
           if (base) altField.setValue(base as never);

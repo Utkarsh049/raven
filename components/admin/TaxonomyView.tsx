@@ -91,10 +91,29 @@ export function TaxonomyView() {
   const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
 
   const fetchDocs = useCallback(async () => {
-    const res = await fetch("/api/nodes?limit=250&depth=0&sort=orderIndex", { credentials: "include" });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    const json = await res.json();
-    return (json.docs ?? []) as NodeDoc[];
+    const limit = 250;
+    let page = 1;
+    const all: NodeDoc[] = [];
+    while (true) {
+      const res = await fetch(`/api/nodes?limit=${limit}&depth=0&sort=orderIndex&page=${page}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const json = await res.json();
+      const docsPage = (json.docs ?? []) as NodeDoc[];
+      all.push(...docsPage);
+      const returnedLimit: number = typeof json.limit === "number" ? json.limit : limit;
+      const hasNextPage: boolean | undefined = json.hasNextPage;
+      const totalPages: number | undefined = typeof json.totalPages === "number" ? json.totalPages : undefined;
+      const currentPage: number = typeof json.page === "number" ? json.page : page;
+      if (json.pagination === false) break;
+      if (typeof hasNextPage === "boolean" && hasNextPage === false) break;
+      if (typeof totalPages === "number" && currentPage >= totalPages) break;
+      if (docsPage.length < returnedLimit) break;
+      if (docsPage.length === 0) break;
+      page += 1;
+    }
+    return all;
   }, []);
 
   useEffect(() => {
@@ -252,9 +271,6 @@ export function TaxonomyView() {
       if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return;
       setDeleteBusyId(id);
       setMoveError(null);
-      const prev = docs;
-      setDocs((cur) => (cur ? cur.filter((d) => !allIds.includes(d.id)) : cur));
-      if (editingId && allIds.includes(editingId)) setEditingId(null);
       try {
         for (const delId of allIds) {
           const res = await fetch(`/api/nodes/${delId}`, { method: "DELETE", credentials: "include" });
@@ -263,14 +279,33 @@ export function TaxonomyView() {
             throw new Error(`${delId}: ${res.status} ${text.slice(0, 400)}`);
           }
         }
+        if (editingId && allIds.includes(editingId)) setEditingId(null);
+        try {
+          const fresh = await fetchDocs();
+          setDocs(fresh);
+        } catch {
+          // Fallback to local filter if refetch fails after successful deletes
+          setDocs((cur) => (cur ? cur.filter((d) => !allIds.includes(d.id)) : cur));
+        }
       } catch (e) {
-        setDocs(prev);
         setMoveError(e instanceof Error ? e.message : String(e));
+        try {
+          const fresh = await fetchDocs();
+          setDocs(fresh);
+          if (editingId && allIds.includes(editingId)) {
+            const stillExists = fresh.some((d) => d.id === editingId);
+            if (!stillExists) setEditingId(null);
+          }
+        } catch {
+          // keep current docs (server state unknown); error already shown
+          // Still clear editingId if it was in the partially-deleted set to avoid editing stale state
+          if (editingId && allIds.includes(editingId)) setEditingId(null);
+        }
       } finally {
         setDeleteBusyId(null);
       }
     },
-    [collectDescendants, docs, editingId],
+    [collectDescendants, docs, editingId, fetchDocs],
   );
 
   const handleMove = useCallback(
@@ -334,7 +369,7 @@ export function TaxonomyView() {
       setDocs(optimistic);
 
       try {
-        const results = await Promise.all(
+        await Promise.all(
           updates.map(async (u) => {
             const res = await fetch(`/api/nodes/${u.id}`, {
               method: "PATCH",
@@ -348,15 +383,26 @@ export function TaxonomyView() {
             }
           }),
         );
-        void results;
+        try {
+          const fresh = await fetchDocs();
+          setDocs(fresh);
+        } catch {
+          // keep optimistic if reconciliation fetch fails after success
+        }
       } catch (e) {
-        setDocs(prev);
         setMoveError(e instanceof Error ? e.message : String(e));
+        try {
+          const fresh = await fetchDocs();
+          setDocs(fresh);
+        } catch {
+          // fallback to previous state if refetch itself fails
+          setDocs(prev);
+        }
       } finally {
         setSaving(false);
       }
     },
-    [docs],
+    [docs, fetchDocs],
   );
 
   if (error) {

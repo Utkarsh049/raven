@@ -8,7 +8,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 **Estimated time: 2–3 days**
 
 - [x] Initialize Next.js 15 (App Router) + TypeScript project named `raven`
-- [x] Set up Tailwind CSS + shadcn/ui
+- [x] Set up Tailwind CSS + shadcn/ui8
 - [x] Create free Supabase project (Postgres + Storage enabled, no card required)
 
 **Deliverable:** Project Setup

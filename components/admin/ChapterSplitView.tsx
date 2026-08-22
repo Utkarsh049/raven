@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { useField, useFormFields } from "@payloadcms/ui";
+import { useField } from "@payloadcms/ui";
 import { BlockRenderer, type ReaderBlock } from "@/components/reader/Blocks";
+import { ChapterBlocksField } from "./ChapterBlocksField";
 
 export function ChapterSplitView() {
   const blocksField = useField<ReaderBlock[]>({ path: "blocks" });
@@ -28,14 +29,12 @@ export function ChapterSplitView() {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-      <div className="min-w-0">
+      <div className="min-w-0 rounded-lg border bg-white p-3 dark:bg-zinc-950">
         <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
           <span className="font-medium">Editor</span>
-          <span>— blocks above apply here; Save to persist</span>
+          <span>— same blocks field as the public page; Save to persist</span>
         </div>
-        <div className="rounded-lg border bg-muted/10 p-3 text-xs text-muted-foreground">
-          Edit blocks in the field above, then save. Preview updates live on the right using the same renderers as the public page.
-        </div>
+        <ChapterBlocksField path="blocks" />
       </div>
 
       <div className="min-w-0 rounded-lg border bg-white p-4 dark:bg-zinc-950">
@@ -53,7 +52,3 @@ export function ChapterSplitView() {
 }
 
 export default ChapterSplitView;
-
-function _useFormFieldsShim() {
-  void useFormFields;
-}
