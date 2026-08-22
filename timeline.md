@@ -43,10 +43,10 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 4 — Taxonomy admin UI (the drag-and-drop tree)
 **Estimated time: 1–1.5 weeks**
 
-- [ ] Build the custom taxonomy tree view in the admin using react-arborist
-- [ ] Wire drag events to update `parentId`/`orderIndex` via Payload's API (reorder + reparent)
-- [ ] Add "create new node" actions from the tree (new branch, subject, chapter, topic) at any valid position
-- [ ] Add inline rename/delete actions on tree nodes
+- [x] Build the custom taxonomy tree view in the admin using react-arborist
+- [x] Wire drag events to update `parentId`/`orderIndex` via Payload's API (reorder + reparent)
+- [x] Add "create new node" actions from the tree (new branch, subject, chapter, topic) at any valid position
+- [x] Add inline rename/delete actions on tree nodes
 - [ ] Test: build out one full branch (year → subject → several chapters) entirely by dragging and clicking, no manual database entry
 
 **Deliverable:** the admin can construct and rearrange a real taxonomy purely through the drag-and-drop tree.
