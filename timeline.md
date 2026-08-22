@@ -21,8 +21,8 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 - [x] Install and configure Payload CMS, embedded in the Next.js app
 - [x] Connect Payload to Supabase Postgres, run first migration
 - [x] Create the first admin user, confirm `/admin` loads and logs in
-- [ ] Set up Supabase Row Level Security (RLS) policies for storage buckets (admin-only writes)
-- [ ] Set up the GitHub Actions keep-alive workflow (`.github/workflows/keepalive.yml`) pinging a trivial API route every 3–4 days — set this up now, before there's real data to lose
+- [x] Set up Supabase Row Level Security (RLS) policies for storage buckets (admin-only writes)
+- [x] Set up the GitHub Actions keep-alive workflow (`.github/workflows/keepalive.yml`) pinging a trivial API route every 3–4 days — set this up now, before there's real data to lose
 
 **Deliverable:** a working, authenticated Payload admin panel on Vercel, with the free-tier keep-alive already running in the background.
 
