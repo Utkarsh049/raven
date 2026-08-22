@@ -303,41 +303,14 @@ export const Nodes: CollectionConfig = {
       ],
     },
     {
-      name: "_preview",
-      type: "ui",
-      admin: { components: { Field: "@/components/admin/ChapterSplitView#ChapterSplitView" } },
-    },
-    {
       name: "blocks",
-      type: "blocks",
-      admin: { hidden: true },
-      blocks: [
-        {
-          slug: "markdown",
-          labels: { singular: "Markdown Block", plural: "Markdown Blocks" },
-          fields: [
-            { name: "content", type: "textarea", required: true },
-            { name: "compiledHtml", type: "textarea", admin: { description: "HTML compiled at publish time", readOnly: true } },
-          ],
+      type: "json",
+      defaultValue: [],
+      admin: {
+        components: {
+          Field: "@/components/admin/ChapterSplitView#ChapterSplitView",
         },
-        {
-          slug: "image",
-          labels: { singular: "Image Block", plural: "Image Blocks" },
-          fields: [
-            { name: "url", type: "text", required: true, admin: { description: "Supabase Storage URL or external URL" } },
-            { name: "alt", type: "text", required: true },
-            { name: "caption", type: "text" },
-          ],
-        },
-        {
-          slug: "youtube",
-          labels: { singular: "YouTube Block", plural: "YouTube Blocks" },
-          fields: [
-            { name: "videoId", type: "text", required: true, admin: { description: "YouTube video ID (11 chars) or full URL" } },
-            { name: "title", type: "text", required: true },
-          ],
-        },
-      ],
+      },
     },
   ],
 };

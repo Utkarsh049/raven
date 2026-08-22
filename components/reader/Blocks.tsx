@@ -104,9 +104,20 @@ function fallbackHtml(text: string) {
 }
 
 export function ImageBlock({ url, alt, caption }: { url: string; alt: string; caption?: string }) {
+  const hasUrl = Boolean(url && url.trim());
+
+  if (!hasUrl) {
+    return (
+      <figure className="overflow-hidden rounded-lg border border-dashed border-border p-5 text-center text-xs text-muted-foreground bg-muted/10">
+        <p className="font-medium">Image block (no URL set yet)</p>
+        {(caption || alt) && <figcaption className="mt-1 text-[11px] text-muted-foreground">{caption || alt}</figcaption>}
+      </figure>
+    );
+  }
+
   return (
     <figure className="overflow-hidden rounded-lg border">
-      <img src={url} alt={alt} className="w-full object-cover" loading="lazy" />
+      <img src={url} alt={alt || ""} className="w-full object-cover" loading="lazy" />
       {(caption || alt) && <figcaption className="bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{caption || alt}</figcaption>}
     </figure>
   );
