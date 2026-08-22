@@ -65,6 +65,11 @@ export const Nodes: CollectionConfig = {
       ],
     },
     {
+      name: "_preview",
+      type: "ui",
+      admin: { components: { Field: "@/components/admin/ChapterSplitView#ChapterSplitView" } },
+    },
+    {
       name: "blocks",
       type: "blocks",
       admin: {
