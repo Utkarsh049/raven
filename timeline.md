@@ -7,14 +7,11 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 1 — Project setup & infrastructure wiring
 **Estimated time: 2–3 days**
 
-- [ ] Initialize Next.js 15 (App Router) + TypeScript project named `raven`
-- [ ] Set up Tailwind CSS + shadcn/ui
-- [ ] Create GitHub repo, push initial commit
-- [ ] Create free Supabase project (Postgres + Storage enabled, no card required)
-- [ ] Create free Vercel project, link to the repo
-- [ ] Deploy a "hello world" page to confirm the pipeline works end-to-end
+- [x] Initialize Next.js 15 (App Router) + TypeScript project named `raven`
+- [x] Set up Tailwind CSS + shadcn/ui
+- [x] Create free Supabase project (Postgres + Storage enabled, no card required)
 
-**Deliverable:** an empty Next.js app live on Vercel, connected to a real Supabase project.
+**Deliverable:** Project Setup
 
 ---
 
