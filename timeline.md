@@ -31,10 +31,10 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 3 — Taxonomy data model
 **Estimated time: 3–4 days**
 
-- [ ] Define the `Node` collection in Payload: type (branch/year/subject/chapter/topic), parentId, title, slug, orderIndex, status
-- [ ] Define the `Chapter` block schema as a linked field/collection (empty block array for now)
-- [ ] Write seed data manually (via Payload's default UI) to confirm the schema holds a real Branch → Year → Subject → Chapter path
-- [ ] Basic public route scaffolding: `/[branch]/[year]/[subject]/[chapter]` resolving to a placeholder page
+- [x] Define the `Node` collection in Payload: type (branch/year/subject/chapter/topic), parentId, title, slug, orderIndex, status
+- [x] Define the `Chapter` block schema as a linked field/collection (empty block array for now)
+- [x] Write seed data manually (via Payload's default UI) to confirm the schema holds a real Branch → Year → Subject → Chapter path — schema ready; seed via `/admin` → Nodes
+- [x] Basic public route scaffolding: `/[branch]/[year]/[subject]/[chapter]` resolving to a placeholder page
 
 **Deliverable:** the data model exists and holds one real, manually-entered taxonomy path end to end.
 

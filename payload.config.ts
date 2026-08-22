@@ -1,6 +1,7 @@
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { buildConfig } from "payload";
+import { Nodes } from "./collections/Nodes";
 import { Users } from "./collections/Users";
 
 export default buildConfig({
@@ -12,7 +13,7 @@ export default buildConfig({
     },
   }),
   editor: lexicalEditor(),
-  collections: [Users],
+  collections: [Users, Nodes],
   admin: {
     user: Users.slug,
   },
