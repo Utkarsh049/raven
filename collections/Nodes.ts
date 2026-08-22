@@ -8,7 +8,10 @@ export const Nodes: CollectionConfig = {
     group: "Taxonomy",
   },
   access: {
-    read: () => true,
+    read: ({ req }) => {
+      if (req.user) return true;
+      return { status: { equals: "published" } } as never;
+    },
   },
   fields: [
     {

@@ -70,7 +70,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 **Estimated time: 1–1.5 weeks**
 
 - [x] Build the split-view layout: block editor on one side, live preview on the other, using the same components the public site will render
-- [ ] Draft vs. Published status on chapters and taxonomy nodes
+- [x] Draft vs. Published status on chapters and taxonomy nodes
 - [ ] Publish hook: compile markdown to HTML at save time, store both raw markdown and compiled HTML
 - [ ] Publish hook: trigger on-demand revalidation (`revalidatePath`) for exactly the affected route
 
