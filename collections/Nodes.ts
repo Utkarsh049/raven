@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { compileMarkdownToHtml } from "../lib/markdown";
+import { resolveChapterPath } from "../lib/taxonomy";
 
 export const Nodes: CollectionConfig = {
   slug: "nodes",
@@ -26,6 +27,25 @@ export const Nodes: CollectionConfig = {
           }
         }
         return data;
+      },
+    ],
+    afterChange: [
+      async ({ doc, req, operation }) => {
+        try {
+          const status = (doc as { status?: string })?.status;
+          const type = (doc as { type?: string })?.type;
+          if (status !== "published") return;
+          if (type !== "chapter" && type !== "topic") return;
+          const id = String((doc as { id: string | number }).id);
+          const path = await resolveChapterPath(req.payload as never, id);
+          if (!path) return;
+          const { revalidatePath } = await import("next/cache");
+          revalidatePath(path);
+          if (operation === "update" || operation === "create") {
+            const { revalidateTag } = await import("next/cache");
+            void revalidateTag;
+          }
+        } catch {}
       },
     ],
   },
