@@ -67,7 +67,10 @@ export const Nodes: CollectionConfig = {
     {
       name: "blocks",
       type: "blocks",
-      admin: { description: "Chapter content blocks (used when type is chapter/topic)" },
+      admin: {
+        description: "Chapter content blocks (used when type is chapter/topic)",
+        components: { Field: "@/components/admin/ChapterBlocksField#ChapterBlocksField" },
+      },
       blocks: [
         {
           slug: "markdown",
