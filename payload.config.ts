@@ -16,5 +16,13 @@ export default buildConfig({
   collections: [Users, Nodes],
   admin: {
     user: Users.slug,
+    components: {
+      views: {
+        taxonomy: {
+          Component: "@/components/admin/TaxonomyView#TaxonomyView",
+          path: "/taxonomy",
+        },
+      },
+    },
   },
 });

@@ -12,10 +12,12 @@ export default async function ChapterPage({ params }: { params: Promise<Params> 
   const resolve = async (slug: string, type: string, parentId?: string | number) => {
     const res = await payload.find({
       collection: "nodes",
+      overrideAccess: false,
       where: {
         slug: { equals: slug },
         type: { equals: type },
         ...(parentId ? { parent: { equals: parentId } } : {}),
+        status: { equals: "published" },
       },
       limit: 1,
       depth: 0,

@@ -1,4 +1,6 @@
 import type { CollectionConfig } from "payload";
+import { compileMarkdownToHtml } from "../lib/markdown";
+import { resolveChapterPath } from "../lib/taxonomy";
 
 export const Nodes: CollectionConfig = {
   slug: "nodes",
@@ -8,7 +10,44 @@ export const Nodes: CollectionConfig = {
     group: "Taxonomy",
   },
   access: {
-    read: () => true,
+    read: ({ req }) => {
+      if (req.user) return true;
+      return { status: { equals: "published" } } as never;
+    },
+  },
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        const blocks = (data as { blocks?: Array<{ blockType?: string; content?: string; compiledHtml?: string }> })?.blocks;
+        if (!Array.isArray(blocks)) return data;
+        for (const b of blocks) {
+          if ((b as { blockType?: string }).blockType === "markdown") {
+            const content = String((b as { content?: string }).content ?? "");
+            (b as { compiledHtml: string }).compiledHtml = compileMarkdownToHtml(content);
+          }
+        }
+        return data;
+      },
+    ],
+    afterChange: [
+      async ({ doc, req, operation }) => {
+        try {
+          const status = (doc as { status?: string })?.status;
+          const type = (doc as { type?: string })?.type;
+          if (status !== "published") return;
+          if (type !== "chapter" && type !== "topic") return;
+          const id = String((doc as { id: string | number }).id);
+          const path = await resolveChapterPath(req.payload as never, id);
+          if (!path) return;
+          const { revalidatePath } = await import("next/cache");
+          revalidatePath(path);
+          if (operation === "update" || operation === "create") {
+            const { revalidateTag } = await import("next/cache");
+            void revalidateTag;
+          }
+        } catch {}
+      },
+    ],
   },
   fields: [
     {
@@ -65,9 +104,17 @@ export const Nodes: CollectionConfig = {
       ],
     },
     {
+      name: "_preview",
+      type: "ui",
+      admin: { components: { Field: "@/components/admin/ChapterSplitView#ChapterSplitView" } },
+    },
+    {
       name: "blocks",
       type: "blocks",
-      admin: { description: "Chapter content blocks (used when type is chapter/topic)" },
+      admin: {
+        description: "Chapter content blocks (used when type is chapter/topic)",
+        components: { Field: "@/components/admin/ChapterBlocksField#ChapterBlocksField" },
+      },
       blocks: [
         {
           slug: "markdown",

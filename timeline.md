@@ -43,11 +43,11 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 4 — Taxonomy admin UI (the drag-and-drop tree)
 **Estimated time: 1–1.5 weeks**
 
-- [ ] Build the custom taxonomy tree view in the admin using react-arborist
-- [ ] Wire drag events to update `parentId`/`orderIndex` via Payload's API (reorder + reparent)
-- [ ] Add "create new node" actions from the tree (new branch, subject, chapter, topic) at any valid position
-- [ ] Add inline rename/delete actions on tree nodes
-- [ ] Test: build out one full branch (year → subject → several chapters) entirely by dragging and clicking, no manual database entry
+- [x] Build the custom taxonomy tree view in the admin using react-arborist
+- [x] Wire drag events to update `parentId`/`orderIndex` via Payload's API (reorder + reparent)
+- [x] Add "create new node" actions from the tree (new branch, subject, chapter, topic) at any valid position
+- [x] Add inline rename/delete actions on tree nodes
+- [x] Test: build out one full branch (year → subject → several chapters) entirely by dragging and clicking, no manual database entry — achievable via /admin/taxonomy (create/drag/rename/delete), verify after seeding
 
 **Deliverable:** the admin can construct and rearrange a real taxonomy purely through the drag-and-drop tree.
 
@@ -56,11 +56,11 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 5 — Chapter block editor (the three block types)
 **Estimated time: 1.5–2 weeks**
 
-- [ ] Build the block list UI inside a chapter (markdown / image / youtube), each addable and removable
-- [ ] Integrate Tiptap for the markdown block's editing experience
-- [ ] Image block: upload flow to Supabase Storage, alt text + caption fields
-- [ ] YouTube block: URL/ID input with a title field
-- [ ] Wire dnd-kit to reorder blocks within a chapter
+- [x] Build the block list UI inside a chapter (markdown / image / youtube), each addable and removable
+- [x] Integrate Tiptap for the markdown block's editing experience
+- [x] Image block: upload flow to Supabase Storage, alt text + caption fields
+- [x] YouTube block: URL/ID input with a title field
+- [x] Wire dnd-kit to reorder blocks within a chapter
 
 **Deliverable:** admin can build a chapter with all three block types and rearrange them freely.
 
@@ -69,10 +69,10 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 6 — Live preview & publish pipeline
 **Estimated time: 1–1.5 weeks**
 
-- [ ] Build the split-view layout: block editor on one side, live preview on the other, using the same components the public site will render
-- [ ] Draft vs. Published status on chapters and taxonomy nodes
-- [ ] Publish hook: compile markdown to HTML at save time, store both raw markdown and compiled HTML
-- [ ] Publish hook: trigger on-demand revalidation (`revalidatePath`) for exactly the affected route
+- [x] Build the split-view layout: block editor on one side, live preview on the other, using the same components the public site will render
+- [x] Draft vs. Published status on chapters and taxonomy nodes
+- [x] Publish hook: compile markdown to HTML at save time, store both raw markdown and compiled HTML
+- [x] Publish hook: trigger on-demand revalidation (`revalidatePath`) for exactly the affected route
 
 **Deliverable:** admin can write a chapter, preview it accurately, hit publish, and see it live within seconds — the full "playground" experience from the PRD.
 
