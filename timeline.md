@@ -18,7 +18,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 2 — Auth, environment & keep-alive
 **Estimated time: 2–3 days**
 
-- [ ] Install and configure Payload CMS, embedded in the Next.js app
+- [x] Install and configure Payload CMS, embedded in the Next.js app
 - [ ] Connect Payload to Supabase Postgres, run first migration
 - [ ] Create the first admin user, confirm `/admin` loads and logs in
 - [ ] Set up Supabase Row Level Security (RLS) policies for storage buckets (admin-only writes)
