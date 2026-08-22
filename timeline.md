@@ -71,7 +71,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 
 - [x] Build the split-view layout: block editor on one side, live preview on the other, using the same components the public site will render
 - [x] Draft vs. Published status on chapters and taxonomy nodes
-- [ ] Publish hook: compile markdown to HTML at save time, store both raw markdown and compiled HTML
+- [x] Publish hook: compile markdown to HTML at save time, store both raw markdown and compiled HTML
 - [ ] Publish hook: trigger on-demand revalidation (`revalidatePath`) for exactly the affected route
 
 **Deliverable:** admin can write a chapter, preview it accurately, hit publish, and see it live within seconds — the full "playground" experience from the PRD.

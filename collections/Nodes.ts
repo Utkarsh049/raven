@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { compileMarkdownToHtml } from "../lib/markdown";
 
 export const Nodes: CollectionConfig = {
   slug: "nodes",
@@ -12,6 +13,21 @@ export const Nodes: CollectionConfig = {
       if (req.user) return true;
       return { status: { equals: "published" } } as never;
     },
+  },
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        const blocks = (data as { blocks?: Array<{ blockType?: string; content?: string; compiledHtml?: string }> })?.blocks;
+        if (!Array.isArray(blocks)) return data;
+        for (const b of blocks) {
+          if ((b as { blockType?: string }).blockType === "markdown") {
+            const content = String((b as { content?: string }).content ?? "");
+            (b as { compiledHtml: string }).compiledHtml = compileMarkdownToHtml(content);
+          }
+        }
+        return data;
+      },
+    ],
   },
   fields: [
     {
