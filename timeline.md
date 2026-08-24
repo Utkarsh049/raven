@@ -121,7 +121,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 **Estimated time: 1–1.5 weeks**
 
 - [x] Web app manifest: icons, `theme-color`, `display: standalone`
-- [ ] Serwist service worker setup
+- [x] Serwist service worker setup
 - [ ] Stale-while-revalidate caching for chapter pages and images
 - [ ] Custom install prompt (`beforeinstallprompt`, shown at a sensible moment, not on first load)
 - [ ] Test: open several chapters, enable airplane mode, confirm they still render fully

@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Raven",
   description: "Offline-capable notes — Branch → Year → Subject → Chapter",
+};
+
+export const viewport = {
   themeColor: "#000000",
 };
 
