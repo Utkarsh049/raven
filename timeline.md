@@ -123,8 +123,8 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 - [x] Web app manifest: icons, `theme-color`, `display: standalone`
 - [x] Serwist service worker setup
 - [x] Stale-while-revalidate caching for chapter pages and images
-- [ ] Custom install prompt (`beforeinstallprompt`, shown at a sensible moment, not on first load)
-- [ ] Test: open several chapters, enable airplane mode, confirm they still render fully
+- [x] Custom install prompt (`beforeinstallprompt`, shown at a sensible moment, not on first load)
+- [x] Test: open several chapters, enable airplane mode, confirm they still render fully
 
 **Deliverable:** Raven installs to a phone home screen, and previously viewed chapters are fully readable offline.
 

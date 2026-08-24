@@ -4,6 +4,7 @@ import "../globals.css";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { SettingsDrawer } from "@/components/settings/SettingsDrawer";
 import { PinsHydrator } from "@/components/pins/PinsHydrator";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
             <SettingsDrawer />
           </header>
           {children}
+          <InstallPrompt />
         </SettingsProvider>
       </body>
     </html>
