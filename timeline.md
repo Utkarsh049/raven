@@ -81,9 +81,9 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 7 — Public reading experience
 **Estimated time: 1.5–2 weeks**
 
-- [ ] Static generation (`generateStaticParams`) for all published chapters/subjects
-- [ ] `fallback: 'blocking'` for newly published pages not yet statically built
-- [ ] Render markdown blocks from pre-compiled HTML (no client-side parsing)
+- [x] Static generation (`generateStaticParams`) for all published chapters/subjects
+- [x] `fallback: 'blocking'` for newly published pages not yet statically built
+- [x] Render markdown blocks from pre-compiled HTML (no client-side parsing)
 - [ ] Image blocks via `next/image`, reserved aspect ratio + `blurDataURL` placeholders, `priority` only on the first above-the-fold image
 - [ ] YouTube blocks as click-to-play facade thumbnails (no auto-loaded iframe)
 - [ ] Breadcrumb-style navigation: Year → Subject → Chapter
