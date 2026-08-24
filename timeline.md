@@ -111,7 +111,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 - [x] Add pin/unpin controls on subject and chapter pages
 - [x] Extend the Dexie/Zustand store to hold an ordered `pinnedIds` list
 - [x] Build the homepage to render pinned items for quick access
-- [ ] Test: pin several items, fully close the app, reopen with no network, confirm pins are intact
+- [x] Test: pin several items, fully close the app, reopen with no network, confirm pins are intact
 
 **Deliverable:** a returning user's homepage shows their pinned content immediately, with or without connectivity.
 
@@ -120,7 +120,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 10 — PWA & offline chapter caching
 **Estimated time: 1–1.5 weeks**
 
-- [ ] Web app manifest: icons, `theme-color`, `display: standalone`
+- [x] Web app manifest: icons, `theme-color`, `display: standalone`
 - [ ] Serwist service worker setup
 - [ ] Stale-while-revalidate caching for chapter pages and images
 - [ ] Custom install prompt (`beforeinstallprompt`, shown at a sensible moment, not on first load)
