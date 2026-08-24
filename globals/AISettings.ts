@@ -48,6 +48,11 @@ export const AISettings: GlobalConfig = {
         { label: "Other (OpenAI-compatible)", value: "other" },
       ],
       admin: { description: "Provider for the key. Uses correct endpoint/format automatically — no Base URL needed for listed providers." },
+      validate: (val: unknown) => {
+        const allowed = ["openai", "anthropic", "google", "deepseek", "moonshot", "xai", "mistral", "groq", "openrouter", "cohere", "other"];
+        if (typeof val !== "string" || !allowed.includes(val)) return "Pick a provider";
+        return true;
+      },
     },
     {
       name: "apiKey",
@@ -60,17 +65,31 @@ export const AISettings: GlobalConfig = {
       name: "baseUrl",
       type: "text",
       admin: {
-        description: "Optional. Only for \"Other\" or to override. e.g. https://api.together.xyz/v1",
-        placeholder: "https://api.openai.com/v1",
+        description: "Required for \"Other\" — base URL of the provider. e.g. https://api.together.xyz/v1",
+        placeholder: "https://api.together.xyz/v1",
+        condition: (data) => (data as { provider?: string })?.provider === "other",
+      },
+      validate: (val: unknown, { data }: { data?: Record<string, unknown> }) => {
+        if ((data as { provider?: string })?.provider === "other" && !String(val ?? "").trim()) return "Base URL is required when provider is Other";
+        if (val && String(val).trim()) {
+          try {
+            const u = new URL(String(val).trim());
+            if (!/^https?:$/.test(u.protocol)) return "Base URL must be http(s)";
+          } catch { return "Base URL must be a valid URL"; }
+        }
+        return true;
       },
     },
     {
       name: "model",
       type: "text",
       admin: {
-        description: "Optional. Model name. Leave blank for provider default.",
-        placeholder: "gpt-4o-mini",
+        description: "Pick from models available to your key — fetched live from the provider. Save Provider + API Key first, then reopen to load models. Or leave as Default.",
+        components: {
+          Field: "@/components/admin/AIModelSelect# AIModelSelect",
+        },
       },
+      validate: ((() => true) as unknown as NonNullable<import("payload").TextField["validate"]>) as never,
     },
   ],
 };

@@ -3,7 +3,7 @@ export type AIProvider = "openai" | "anthropic" | "google" | "deepseek" | "moons
 export const DEFAULT_MODELS: Record<AIProvider, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-20241022",
-  google: "gemini-1.5-flash",
+  google: "gemini-3.6-flash",
   deepseek: "deepseek-chat",
   moonshot: "moonshot-v1-8k",
   xai: "grok-2-latest",
@@ -13,6 +13,18 @@ export const DEFAULT_MODELS: Record<AIProvider, string> = {
   cohere: "command-r",
   other: "gpt-4o-mini",
 };
+
+const GOOGLE_MODEL_ALIASES: Record<string, string> = {
+  "gemini-1.5-flash": "gemini-2.0-flash",
+  "gemini-1.5-flash-001": "gemini-2.0-flash",
+  "gemini-1.5-flash-002": "gemini-2.0-flash",
+  "gemini-1.5-flash-latest": "gemini-2.0-flash",
+};
+
+function resolveGoogleModel(model: string): string {
+  const m = String(model ?? "").trim();
+  return GOOGLE_MODEL_ALIASES[m] ?? m;
+}
 
 export const PROVIDER_BASE_URLS: Partial<Record<AIProvider, string>> = {
   deepseek: "https://api.deepseek.com/v1",
@@ -187,7 +199,8 @@ async function callAnthropic(prompt: string, systemPrompt: string | undefined, m
 }
 
 async function callGoogle(prompt: string, systemPrompt: string | undefined, model: string, apiKey: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const effModel = resolveGoogleModel(model);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(effModel)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const parts: Array<{ text: string }> = [];
   if (systemPrompt) parts.push({ text: systemPrompt });
   parts.push({ text: prompt });
@@ -351,7 +364,7 @@ export async function streamWithAI(
 export const MODEL_CHOICES: Record<AIProvider, string[]> = {
   openai: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
   anthropic: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"],
-  google: ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"],
+  google: ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro"],
   deepseek: ["deepseek-chat", "deepseek-reasoner"],
   moonshot: ["moonshot-v1-8k", "moonshot-v1-32k", "kimi-k2"],
   xai: ["grok-2-latest", "grok-3"],
@@ -361,3 +374,48 @@ export const MODEL_CHOICES: Record<AIProvider, string[]> = {
   cohere: ["command-r", "command-r-plus"],
   other: ["gpt-4o-mini"],
 };
+
+export type ListModelsResult = { models: string[]; fallback: string[]; live: boolean; error?: string };
+
+export async function listModels(resolved: ResolvedAIConfig): Promise<ListModelsResult> {
+  const provider = resolved.provider;
+  const fallback = MODEL_CHOICES[provider] ?? MODEL_CHOICES.other;
+
+  if (isGoogleProvider(provider)) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(resolved.apiKey)}`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) {
+        const t = await res.text().catch(() => "");
+        return { models: fallback, fallback, live: false, error: `Google models ${res.status}: ${t.slice(0, 300)}` };
+      }
+      const json = (await res.json()) as { models?: Array<{ name?: string; supportedGenerationMethods?: string[] }> };
+      const names = (json.models ?? [])
+        .filter((m) => !m.supportedGenerationMethods || m.supportedGenerationMethods.includes("generateContent"))
+        .map((m) => String(m.name ?? "").replace(/^models\//, "")).filter(Boolean);
+      return names.length ? { models: names, fallback, live: true } : { models: fallback, fallback, live: false, error: "Google returned no models" };
+    } catch (e) { return { models: fallback, fallback, live: false, error: e instanceof Error ? e.message : String(e) }; }
+  }
+
+  if (isAnthropicProvider(provider)) {
+    return { models: fallback, fallback, live: false, error: "Anthropic does not expose a list-models endpoint" };
+  }
+
+  try {
+    const baseUrl = resolveBaseUrl(provider, resolved.baseUrl);
+    const headers: Record<string, string> = { Authorization: `Bearer ${resolved.apiKey}` };
+    if (provider === "openrouter") {
+      const ref = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:3000";
+      headers["HTTP-Referer"] = ref;
+      headers["X-Title"] = "Raven";
+    }
+    const res = await fetch(`${baseUrl}/models`, { headers, cache: "no-store" });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      return { models: fallback, fallback, live: false, error: `${provider} models ${res.status}: ${t.slice(0, 300)}` };
+    }
+    const json = (await res.json()) as { data?: Array<{ id?: string }> };
+    const ids = (json.data ?? []).map((m) => String(m.id ?? "").trim()).filter(Boolean);
+    return ids.length ? { models: ids, fallback, live: true } : { models: fallback, fallback, live: false, error: "Provider returned no models" };
+  } catch (e) { return { models: fallback, fallback, live: false, error: e instanceof Error ? e.message : String(e) }; }
+}
