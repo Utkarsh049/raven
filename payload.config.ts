@@ -18,6 +18,7 @@ export default buildConfig({
   globals: [AISettings],
   admin: {
     user: Users.slug,
+    meta: { icons: [{ rel: "icon", url: "/icon.png" }], titleSuffix: " — Raven" },
     components: {
       views: {
         taxonomy: {

@@ -58,22 +58,22 @@ export function SettingsDrawer() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50 flex justify-end">
           <button type="button" aria-label="Close settings" className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" onClick={() => setOpen(false)} />
           <aside
             role="dialog"
             aria-modal="true"
             aria-label="Settings"
-            className="absolute right-0 top-0 flex h-full w-[360px] max-w-[86vw] flex-col border-l bg-background shadow-xl"
+            className="relative flex h-dvh w-[360px] max-w-[86vw] flex-col border-l bg-background shadow-xl"
           >
-            <div className="flex items-center justify-between border-b px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
               <h2 className="text-sm font-semibold">Settings</h2>
               <button type="button" onClick={() => setOpen(false)} className="rounded px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Close">
                 ✕
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 space-y-6">
               <section className="space-y-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Branch</h3>
                 <p className="text-xs text-muted-foreground">Preferred branch for navigation. Saved offline.</p>
@@ -129,7 +129,7 @@ export function SettingsDrawer() {
               </section>
             </div>
 
-            <div className="border-t px-4 py-3 text-xs text-muted-foreground">Branch & theme persist in IndexedDB — works offline.</div>
+            <div className="shrink-0 border-t px-4 py-3 text-xs text-muted-foreground">Branch & theme persist in IndexedDB — works offline.</div>
           </aside>
         </div>
       )}

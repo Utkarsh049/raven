@@ -23,6 +23,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Raven",
   description: "Offline-capable notes — Branch → Year → Subject → Chapter",
+  icons: { icon: "/icon.png", apple: "/icon-512.png" },
+  openGraph: { title: "Raven", description: "Offline-capable notes — Branch → Year → Subject → Chapter", images: ["/og.png"] },
 };
 
 export const viewport = {
@@ -46,8 +48,9 @@ export default function RootLayout({
         <SettingsProvider>
           <PinsHydrator />
           <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b bg-background/80 px-4 backdrop-blur sm:px-6">
-            <a href="/" className="shrink-0 text-sm font-semibold tracking-tight">
-              Raven
+            <a href="/" className="flex shrink-0 items-center gap-2">
+              <img src="/icon-512.png" alt="Raven" width={28} height={28} className="h-7 w-7 rounded-md object-contain" />
+              <span className="text-sm font-semibold tracking-tight">Raven</span>
             </a>
             <div className="flex min-w-0 flex-1 justify-center px-2">
               <SearchBox />
