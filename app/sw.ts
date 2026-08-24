@@ -1,6 +1,6 @@
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { ExpirationPlugin, Serwist, StaleWhileRevalidate } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -15,7 +15,28 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    ...defaultCache,
+    {
+      matcher: ({ url }: { url: URL }) => url.pathname.match(/^\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/) !== null,
+      handler: new StaleWhileRevalidate({
+        cacheName: "raven-chapter-pages",
+        plugins: [
+          new ExpirationPlugin({ maxEntries: 128, maxAgeSeconds: 30 * 24 * 60 * 60, maxAgeFrom: "last-used" }),
+        ],
+      }),
+    },
+    {
+      matcher: ({ url }: { url: URL }) =>
+        url.hostname.endsWith("supabase.co") && url.pathname.includes("/storage/"),
+      handler: new StaleWhileRevalidate({
+        cacheName: "raven-chapter-images",
+        plugins: [
+          new ExpirationPlugin({ maxEntries: 128, maxAgeSeconds: 30 * 24 * 60 * 60, maxAgeFrom: "last-used" }),
+        ],
+      }),
+    },
+  ],
 });
 
 serwist.addEventListeners();
