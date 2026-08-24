@@ -318,12 +318,90 @@ function MarkdownRow({
   row: BlockRow;
   onChange: (patch: Partial<BlockRow>) => void;
 }) {
+  const [prompt, setPrompt] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [streamed, setStreamed] = useState("");
+  const [aiErr, setAiErr] = useState<string | null>(null);
+
+  const onGenerate = useCallback(async () => {
+    const p = prompt.trim();
+    if (!p) { setAiErr("Enter a prompt for AI."); return; }
+    setBusy(true); setAiErr(null); setStreamed("");
+    try {
+      const res = await fetch("/api/ai/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: p }),
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error || `AI stream failed (${res.status})`);
+      }
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No stream body");
+      const decoder = new TextDecoder();
+      let buf = "";
+      let full = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const parts = buf.split("\n\n");
+        buf = parts.pop() ?? "";
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6)) as { chunk?: string; done?: boolean; error?: string };
+            if (data.error) throw new Error(data.error);
+            if (data.done) break;
+            if (data.chunk) { full += data.chunk; setStreamed(full); }
+          } catch (e) { if (e instanceof SyntaxError) continue; throw e; }
+        }
+      }
+      if (!full) throw new Error("AI returned empty text.");
+      onChange({ content: full });
+      setPrompt(""); setStreamed("");
+    } catch (e) {
+      try {
+        const fb = await fetch("/api/ai/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: p }),
+        });
+        const j = (await fb.json()) as { text?: string; error?: string };
+        if (!fb.ok) throw new Error(j.error || String(e));
+        const text = String(j.text ?? "");
+        if (!text) throw new Error(String(e));
+        onChange({ content: text }); setPrompt(""); setStreamed(""); setAiErr(null);
+        return;
+      } catch { /* keep original error */ }
+      setAiErr(e instanceof Error ? e.message : String(e));
+    } finally { setBusy(false); }
+  }, [onChange, prompt]);
+
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
       <TiptapEditor
         content={row.content ?? ""}
         onChange={(content) => onChange({ content })}
       />
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+        <input
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Prompt for AI — e.g. Draft an intro to photosynthesis"
+          className="raven-input"
+          style={{ flex: 1, minWidth: "200px" }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onGenerate(); } }}
+        />
+        <button type="button" onClick={onGenerate} disabled={busy} className="raven-btn">
+          {busy ? "Generating…" : "Generate with AI"}
+        </button>
+      </div>
+      {busy && streamed && <div className="rounded border bg-muted/20 p-2 text-xs whitespace-pre-wrap max-h-32 overflow-auto">{streamed}</div>}
+      {aiErr && <p style={{ color: "#f87171", fontSize: "0.75rem", margin: 0 }}>{aiErr}</p>}
+      <p className="raven-subtitle" style={{ fontSize: "0.6875rem" }}>AI output lands here for review — edit before saving. Never auto-published.</p>
     </div>
   );
 }

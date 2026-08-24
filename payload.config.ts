@@ -3,6 +3,7 @@ import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { buildConfig } from "payload";
 import { Nodes } from "./collections/Nodes";
 import { Users } from "./collections/Users";
+import { AISettings } from "./globals/AISettings";
 
 export default buildConfig({
   secret: process.env.PAYLOAD_SECRET!,
@@ -14,6 +15,7 @@ export default buildConfig({
   }),
   editor: lexicalEditor(),
   collections: [Users, Nodes],
+  globals: [AISettings],
   admin: {
     user: Users.slug,
     components: {

@@ -143,15 +143,29 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ---
 
 ## Phase 12 — AI-assisted markdown & polish
-**Estimated time: 1 week**
+**Estimated time: 1–1.5 weeks**
 
-- [ ] Add the "Generate with AI" action on the markdown block, calling your chosen LLM provider
-- [ ] Ensure AI output always lands in the block for admin review/edit — never auto-published
+Two complementary AI surfaces — pick either or both:
+
+**12A — Inside Raven (bring your own API key)**
+- [x] Provider abstraction in `lib/ai.ts` for OpenAI / Claude / Gemini (API keys via `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GOOGLE_API_KEY` env — server-side only, never in IndexedDB)
+- [x] "Generate with AI" action on the markdown block → `POST /api/ai/generate` → draft lands in the block for admin review/edit — never auto-published
+- [x] Per-block prompt + model chooser, streamed response
+
+**12B — Outside Raven (ChatGPT / Claude / Gemini controlling Raven)**
+- [ ] Secured API `POST /api/raven/*` with `RAVEN_API_KEY` (no Payload secret exposed)
+- [ ] MCP server at `/api/mcp` — single connector for all three:
+  - ChatGPT: Custom GPT → Actions (OpenAPI) + MCP connector
+  - Claude: native MCP
+  - Gemini: function calling via same OpenAPI
+- [ ] Tools: `create_branch`, `create_subject`, `create_chapter`, `list_nodes`, `publish_chapter` — e.g. "create chapter Photosynthesis under science/1st/biology" from ChatGPT creates the Payload Node end-to-end
+- [ ] Shared core: both 12A and 12B reuse the same chapter-creation + publish/revalidate hooks
+
 - [ ] Accessibility pass: color contrast in both themes, enforce alt text on image blocks
 - [ ] Performance pass: Lighthouse audit, confirm no unexpected layout shift or slow paints
 - [ ] Handle edge cases: empty taxonomy levels, broken image links, missing/invalid YouTube IDs
 
-**Deliverable:** Raven feels finished — fast, accessible, and resilient to incomplete content.
+**Deliverable:** Raven feels finished — fast, accessible, resilient to incomplete content, and AI-controllable from inside (API key) or outside (ChatGPT/Claude/Gemini via MCP).
 
 ---
 
