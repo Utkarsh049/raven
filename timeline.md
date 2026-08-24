@@ -153,13 +153,13 @@ Two complementary AI surfaces — pick either or both:
 - [x] Per-block prompt + model chooser, streamed response
 
 **12B — Outside Raven (ChatGPT / Claude / Gemini controlling Raven)**
-- [ ] Secured API `POST /api/raven/*` with `RAVEN_API_KEY` (no Payload secret exposed)
-- [ ] MCP server at `/api/mcp` — single connector for all three:
-  - ChatGPT: Custom GPT → Actions (OpenAPI) + MCP connector
-  - Claude: native MCP
+- [x] Secured API `POST /api/raven/*` with `RAVEN_API_KEY` (no Payload secret exposed) — `POST /api/raven/nodes` + `GET /api/raven/nodes` via `lib/raven-api.ts` (`Authorization: Bearer RAVEN_API_KEY` or `x-raven-key`)
+- [x] MCP server at `/api/mcp` — single connector for all three:
+  - ChatGPT: Custom GPT → Actions (OpenAPI at `/api/raven/openapi`) + MCP connector
+  - Claude: native MCP (JSON-RPC `tools/list`/`tools/call`/`initialize`)
   - Gemini: function calling via same OpenAPI
-- [ ] Tools: `create_branch`, `create_subject`, `create_chapter`, `list_nodes`, `publish_chapter` — e.g. "create chapter Photosynthesis under science/1st/biology" from ChatGPT creates the Payload Node end-to-end
-- [ ] Shared core: both 12A and 12B reuse the same chapter-creation + publish/revalidate hooks
+- [x] Tools: `create_node`/`publish_node`/`list_nodes`/`search_nodes` (covers `create_branch|subject|chapter`) — e.g. "create chapter Photosynthesis under science/1st/biology" from ChatGPT creates the Payload Node end-to-end — via `/api/mcp`
+- [x] Shared core: both 12A and 12B reuse the same chapter-creation + publish/revalidate hooks (`lib/raven-api.ts`, `Nodes` hooks)
 
 - [ ] Accessibility pass: color contrast in both themes, enforce alt text on image blocks
 - [ ] Performance pass: Lighthouse audit, confirm no unexpected layout shift or slow paints
