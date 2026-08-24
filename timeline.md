@@ -96,10 +96,10 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 8 — Settings: branch & theme
 **Estimated time: 3–5 days**
 
-- [ ] Build the settings drawer UI
-- [ ] Branch toggle, wired to a Zustand store
-- [ ] Light/dark theme toggle, wired to the same store, applied globally
-- [ ] Persist both to IndexedDB via Dexie.js so they survive app restarts with no network
+- [x] Build the settings drawer UI
+- [x] Branch toggle, wired to a Zustand store
+- [x] Light/dark theme toggle, wired to the same store, applied globally
+- [x] Persist both to IndexedDB via Dexie.js so they survive app restarts with no network
 
 **Deliverable:** switching branch or theme is instant, global, and remembered on the next visit — even offline.
 

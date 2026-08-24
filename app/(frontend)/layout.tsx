@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
+import { SettingsProvider } from "@/components/settings/SettingsProvider";
+import { SettingsDrawer } from "@/components/settings/SettingsDrawer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,8 +25,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col">
+        <SettingsProvider>
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur sm:px-6">
+            <a href="/" className="text-sm font-semibold tracking-tight">
+              Raven
+            </a>
+            <SettingsDrawer />
+          </header>
+          {children}
+        </SettingsProvider>
+      </body>
     </html>
   );
 }
