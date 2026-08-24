@@ -8,7 +8,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 **Estimated time: 2–3 days**
 
 - [x] Initialize Next.js 15 (App Router) + TypeScript project named `raven`
-- [x] Set up Tailwind CSS + shadcn/ui
+- [x] Set up Tailwind CSS + shadcn/ui8
 - [x] Create free Supabase project (Postgres + Storage enabled, no card required)
 
 **Deliverable:** Project Setup
@@ -81,13 +81,13 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 7 — Public reading experience
 **Estimated time: 1.5–2 weeks**
 
-- [ ] Static generation (`generateStaticParams`) for all published chapters/subjects
-- [ ] `fallback: 'blocking'` for newly published pages not yet statically built
-- [ ] Render markdown blocks from pre-compiled HTML (no client-side parsing)
-- [ ] Image blocks via `next/image`, reserved aspect ratio + `blurDataURL` placeholders, `priority` only on the first above-the-fold image
-- [ ] YouTube blocks as click-to-play facade thumbnails (no auto-loaded iframe)
-- [ ] Breadcrumb-style navigation: Year → Subject → Chapter
-- [ ] Mobile-first responsive pass
+- [x] Static generation (`generateStaticParams`) for all published chapters/subjects
+- [x] `fallback: 'blocking'` for newly published pages not yet statically built
+- [x] Render markdown blocks from pre-compiled HTML (no client-side parsing)
+- [x] Image blocks via `next/image`, reserved aspect ratio + `blurDataURL` placeholders, `priority` only on the first above-the-fold image
+- [x] YouTube blocks as click-to-play facade thumbnails (no auto-loaded iframe)
+- [x] Breadcrumb-style navigation: Year → Subject → Chapter
+- [x] Mobile-first responsive pass
 
 **Deliverable:** a stranger can browse real, published content on mobile, start to finish, with no visible loading jank.
 

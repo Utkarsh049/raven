@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Tree } from "react-arborist";
+import "./admin-components.css";
 
 type NodeDoc = {
   id: string;
@@ -15,12 +16,12 @@ type NodeDoc = {
 
 type ArborNode = { id: string; name: string; children?: ArborNode[]; doc: NodeDoc };
 
-const TYPE_DOT: Record<NodeDoc["type"], string> = {
-  branch: "bg-violet-500",
-  year: "bg-blue-500",
-  subject: "bg-emerald-500",
-  chapter: "bg-amber-500",
-  topic: "bg-zinc-400",
+const TYPE_COLOR: Record<NodeDoc["type"], string> = {
+  branch: "#8b5cf6",
+  year: "#3b82f6",
+  subject: "#10b981",
+  chapter: "#f59e0b",
+  topic: "#a1a1aa",
 };
 
 function parentIdOf(v: NodeDoc["parent"]): string | null {
@@ -91,10 +92,29 @@ export function TaxonomyView() {
   const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
 
   const fetchDocs = useCallback(async () => {
-    const res = await fetch("/api/nodes?limit=250&depth=0&sort=orderIndex", { credentials: "include" });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    const json = await res.json();
-    return (json.docs ?? []) as NodeDoc[];
+    const limit = 250;
+    let page = 1;
+    const all: NodeDoc[] = [];
+    while (true) {
+      const res = await fetch(`/api/nodes?limit=${limit}&depth=0&sort=orderIndex&page=${page}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const json = await res.json();
+      const docsPage = (json.docs ?? []) as NodeDoc[];
+      all.push(...docsPage);
+      const returnedLimit: number = typeof json.limit === "number" ? json.limit : limit;
+      const hasNextPage: boolean | undefined = json.hasNextPage;
+      const totalPages: number | undefined = typeof json.totalPages === "number" ? json.totalPages : undefined;
+      const currentPage: number = typeof json.page === "number" ? json.page : page;
+      if (json.pagination === false) break;
+      if (typeof hasNextPage === "boolean" && hasNextPage === false) break;
+      if (typeof totalPages === "number" && currentPage >= totalPages) break;
+      if (docsPage.length < returnedLimit) break;
+      if (docsPage.length === 0) break;
+      page += 1;
+    }
+    return all;
   }, []);
 
   useEffect(() => {
@@ -252,9 +272,6 @@ export function TaxonomyView() {
       if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return;
       setDeleteBusyId(id);
       setMoveError(null);
-      const prev = docs;
-      setDocs((cur) => (cur ? cur.filter((d) => !allIds.includes(d.id)) : cur));
-      if (editingId && allIds.includes(editingId)) setEditingId(null);
       try {
         for (const delId of allIds) {
           const res = await fetch(`/api/nodes/${delId}`, { method: "DELETE", credentials: "include" });
@@ -263,14 +280,33 @@ export function TaxonomyView() {
             throw new Error(`${delId}: ${res.status} ${text.slice(0, 400)}`);
           }
         }
+        if (editingId && allIds.includes(editingId)) setEditingId(null);
+        try {
+          const fresh = await fetchDocs();
+          setDocs(fresh);
+        } catch {
+          // Fallback to local filter if refetch fails after successful deletes
+          setDocs((cur) => (cur ? cur.filter((d) => !allIds.includes(d.id)) : cur));
+        }
       } catch (e) {
-        setDocs(prev);
         setMoveError(e instanceof Error ? e.message : String(e));
+        try {
+          const fresh = await fetchDocs();
+          setDocs(fresh);
+          if (editingId && allIds.includes(editingId)) {
+            const stillExists = fresh.some((d) => d.id === editingId);
+            if (!stillExists) setEditingId(null);
+          }
+        } catch {
+          // keep current docs (server state unknown); error already shown
+          // Still clear editingId if it was in the partially-deleted set to avoid editing stale state
+          if (editingId && allIds.includes(editingId)) setEditingId(null);
+        }
       } finally {
         setDeleteBusyId(null);
       }
     },
-    [collectDescendants, docs, editingId],
+    [collectDescendants, docs, editingId, fetchDocs],
   );
 
   const handleMove = useCallback(
@@ -334,7 +370,7 @@ export function TaxonomyView() {
       setDocs(optimistic);
 
       try {
-        const results = await Promise.all(
+        await Promise.all(
           updates.map(async (u) => {
             const res = await fetch(`/api/nodes/${u.id}`, {
               method: "PATCH",
@@ -348,15 +384,26 @@ export function TaxonomyView() {
             }
           }),
         );
-        void results;
+        try {
+          const fresh = await fetchDocs();
+          setDocs(fresh);
+        } catch {
+          // keep optimistic if reconciliation fetch fails after success
+        }
       } catch (e) {
-        setDocs(prev);
         setMoveError(e instanceof Error ? e.message : String(e));
+        try {
+          const fresh = await fetchDocs();
+          setDocs(fresh);
+        } catch {
+          // fallback to previous state if refetch itself fails
+          setDocs(prev);
+        }
       } finally {
         setSaving(false);
       }
     },
-    [docs],
+    [docs, fetchDocs],
   );
 
   if (error) {
@@ -382,23 +429,23 @@ export function TaxonomyView() {
   const editingDoc = editingId ? docs.find((d) => d.id === editingId) ?? null : null;
 
   return (
-    <div className="p-6">
-      <div className="mb-4 flex items-end justify-between gap-4">
+    <div className="raven-taxonomy-wrap">
+      <div className="raven-taxonomy-header">
         <div>
-          <h1 className="text-lg font-semibold">Taxonomy</h1>
-          <p className="mt-1 text-sm text-zinc-500">Branch → Year → Subject → Chapter → Topic · drag to reorder / reparent</p>
+          <h1 className="raven-title">Taxonomy</h1>
+          <p className="raven-subtitle">Branch → Year → Subject → Chapter → Topic · drag to reorder / reparent</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <button
             type="button"
             onClick={() => openCreate(null, "branch")}
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
+            className="raven-btn raven-btn-primary"
           >
             New branch
           </button>
           <a
             href="/admin/collections/nodes"
-            className="rounded-md border px-3 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
+            className="raven-btn"
           >
             Manage in Nodes
           </a>
@@ -406,18 +453,18 @@ export function TaxonomyView() {
       </div>
 
       {isCreateOpen && (
-        <div className="mb-4 rounded-lg border bg-zinc-50 p-4 dark:bg-zinc-900/50">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium">
+        <div className="raven-card" style={{ marginBottom: "1.25rem" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+            <p style={{ fontWeight: 600, fontSize: "0.875rem", margin: 0 }}>
               New node {createParent ? `under ${docs?.find((d) => d.id === createParent)?.title ?? createParent}` : "at root"}
             </p>
-            <button type="button" onClick={() => setCreateParent(null)} className="text-xs text-zinc-500 hover:text-zinc-700">
+            <button type="button" onClick={() => setCreateParent(null)} className="raven-btn raven-btn-sm">
               Close
             </button>
           </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-xs">
-              <span className="font-medium text-zinc-600 dark:text-zinc-400">Title</span>
+          <div className="raven-form-grid raven-form-grid-2" style={{ marginTop: "0.75rem" }}>
+            <div className="raven-field-group">
+              <label className="raven-field-label">Title</label>
               <input
                 value={createTitle}
                 onChange={(e) => {
@@ -426,11 +473,11 @@ export function TaxonomyView() {
                   if (!createSlugTouched) setCreateSlug(slugify(v));
                 }}
                 placeholder="e.g. Organic Chemistry"
-                className="rounded-md border bg-white px-2.5 py-2 text-sm dark:bg-zinc-950"
+                className="raven-input"
               />
-            </label>
-            <label className="grid gap-1 text-xs">
-              <span className="font-medium text-zinc-600 dark:text-zinc-400">Slug</span>
+            </div>
+            <div className="raven-field-group">
+              <label className="raven-field-label">Slug</label>
               <input
                 value={createSlug}
                 onChange={(e) => {
@@ -438,15 +485,16 @@ export function TaxonomyView() {
                   setCreateSlug(e.target.value);
                 }}
                 placeholder="organic-chemistry"
-                className="rounded-md border bg-white px-2.5 py-2 font-mono text-sm dark:bg-zinc-950"
+                className="raven-input"
+                style={{ fontFamily: "monospace" }}
               />
-            </label>
-            <label className="grid gap-1 text-xs">
-              <span className="font-medium text-zinc-600 dark:text-zinc-400">Type</span>
+            </div>
+            <div className="raven-field-group">
+              <label className="raven-field-label">Type</label>
               <select
                 value={createType}
                 onChange={(e) => setCreateType(e.target.value as NodeDoc["type"])}
-                className="rounded-md border bg-white px-2.5 py-2 text-sm dark:bg-zinc-950"
+                className="raven-input"
               >
                 {CREATE_TYPES.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -454,35 +502,36 @@ export function TaxonomyView() {
                   </option>
                 ))}
               </select>
-            </label>
-            <div className="flex items-end gap-2">
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "0.5rem" }}>
               <button
                 type="button"
                 onClick={submitCreate}
                 disabled={createBusy}
-                className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+                className="raven-btn raven-btn-primary"
+                style={{ height: "36px" }}
               >
                 {createBusy ? "Creating…" : "Create"}
               </button>
-              <span className="pb-2 text-xs text-zinc-500">Appended at end of siblings</span>
+              <span className="raven-subtitle" style={{ fontSize: "0.6875rem", paddingBottom: "0.5rem" }}>Appended at end of siblings</span>
             </div>
           </div>
-          {createError && <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{createError}</p>}
-          {createParent === ("__done__" as unknown as string) && <p className="mt-2 text-xs text-emerald-700">Created.</p>}
+          {createError && <p style={{ color: "#f87171", fontSize: "0.75rem", marginTop: "0.5rem" }}>{createError}</p>}
+          {createParent === ("__done__" as unknown as string) && <p style={{ color: "#34d399", fontSize: "0.75rem", marginTop: "0.5rem" }}>Created.</p>}
         </div>
       )}
 
       {editingId && editingDoc && (
-        <div className="mb-4 rounded-lg border bg-amber-50 p-4 dark:bg-amber-950/30">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium">Rename: {editingDoc.title}</p>
-            <button type="button" onClick={() => setEditingId(null)} className="text-xs text-zinc-500 hover:text-zinc-700">
+        <div className="raven-card" style={{ marginBottom: "1.25rem", borderColor: "#f59e0b" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+            <p style={{ fontWeight: 600, fontSize: "0.875rem", margin: 0 }}>Rename: {editingDoc.title}</p>
+            <button type="button" onClick={() => setEditingId(null)} className="raven-btn raven-btn-sm">
               Cancel
             </button>
           </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-xs">
-              <span className="font-medium text-zinc-600 dark:text-zinc-400">Title</span>
+          <div className="raven-form-grid raven-form-grid-2" style={{ marginTop: "0.75rem" }}>
+            <div className="raven-field-group">
+              <label className="raven-field-label">Title</label>
               <input
                 value={editTitle}
                 onChange={(e) => {
@@ -490,51 +539,52 @@ export function TaxonomyView() {
                   setEditTitle(v);
                   if (!editSlugTouched) setEditSlug(slugify(v));
                 }}
-                className="rounded-md border bg-white px-2.5 py-2 text-sm dark:bg-zinc-950"
+                className="raven-input"
               />
-            </label>
-            <label className="grid gap-1 text-xs">
-              <span className="font-medium text-zinc-600 dark:text-zinc-400">Slug</span>
+            </div>
+            <div className="raven-field-group">
+              <label className="raven-field-label">Slug</label>
               <input
                 value={editSlug}
                 onChange={(e) => {
                   setEditSlugTouched(true);
                   setEditSlug(e.target.value);
                 }}
-                className="rounded-md border bg-white px-2.5 py-2 font-mono text-sm dark:bg-zinc-950"
+                className="raven-input"
+                style={{ fontFamily: "monospace" }}
               />
-            </label>
+            </div>
           </div>
-          <div className="mt-3 flex items-center gap-2">
+          <div style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <button
               type="button"
               onClick={submitRename}
               disabled={editBusy}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+              className="raven-btn raven-btn-primary"
             >
               {editBusy ? "Saving…" : "Save"}
             </button>
-            <a href={`/admin/collections/nodes/${editingId}`} className="text-xs text-zinc-500 underline">
+            <a href={`/admin/collections/nodes/${editingId}`} className="raven-subtitle" style={{ textDecoration: "underline" }}>
               Open in Nodes
             </a>
           </div>
-          {editError && <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{editError}</p>}
+          {editError && <p style={{ color: "#f87171", fontSize: "0.75rem", marginTop: "0.5rem" }}>{editError}</p>}
         </div>
       )}
 
-      {saving && <p className="mb-2 text-xs text-amber-600">Saving order…</p>}
-      {moveError && <p className="mb-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{moveError}</p>}
+      {saving && <p style={{ color: "#f59e0b", fontSize: "0.75rem", margin: "0 0 0.5rem 0" }}>Saving order…</p>}
+      {moveError && <p style={{ color: "#f87171", fontSize: "0.75rem", margin: "0 0 0.5rem 0" }}>{moveError}</p>}
 
       {docs.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-zinc-500">
+        <div className="raven-empty-state">
           No nodes yet. Create your first Branch in{" "}
-          <a className="underline" href="/admin/collections/nodes/create">
+          <a className="raven-subtitle" style={{ textDecoration: "underline" }} href="/admin/collections/nodes/create">
             Nodes → Create
           </a>
           , then come back here.
         </div>
       ) : (
-        <div className="overflow-auto rounded-lg border bg-white dark:bg-zinc-950">
+        <div className="raven-taxonomy-tree-card">
           <Tree
             data={data}
             openByDefault={false}
@@ -548,13 +598,12 @@ export function TaxonomyView() {
             {({ node, style, dragHandle }) => (
               <div
                 ref={dragHandle as never}
-                style={style}
-                className="flex items-center gap-1 border-b border-zinc-100 px-2 text-sm dark:border-zinc-900"
+                style={{ ...style, display: "flex", alignItems: "center", gap: "0.35rem", padding: "0 0.5rem", fontSize: "0.875rem", borderBottom: "1px solid var(--theme-elevation-150, #27272a)" }}
                 title={`${node.data.doc.type} · ${node.data.doc.slug} · ${node.data.doc.status}`}
               >
-                <span className={`h-2 w-2 shrink-0 rounded-full ${TYPE_DOT[node.data.doc.type]}`} />
-                <span className="min-w-0 flex-1 truncate font-medium">{node.data.name}</span>
-                <span className="hidden shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 sm:inline">
+                <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: TYPE_COLOR[node.data.doc.type], flexShrink: 0 }} />
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{node.data.name}</span>
+                <span className="raven-badge raven-badge-default">
                   {node.data.doc.type}
                 </span>
                 <button
@@ -571,7 +620,7 @@ export function TaxonomyView() {
                             : "topic";
                     openCreate(node.data.doc.id, next);
                   }}
-                  className="shrink-0 rounded border px-1.5 py-0.5 text-[11px] hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                  className="raven-btn raven-btn-sm"
                   title="Add child under this node"
                 >
                   + child
@@ -582,7 +631,7 @@ export function TaxonomyView() {
                     e.stopPropagation();
                     beginRename(node.data.doc);
                   }}
-                  className="shrink-0 rounded border px-1.5 py-0.5 text-[11px] hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                  className="raven-btn raven-btn-sm"
                 >
                   Rename
                 </button>
@@ -593,22 +642,19 @@ export function TaxonomyView() {
                     handleDelete(node.data.doc.id);
                   }}
                   disabled={deleteBusyId === node.data.doc.id}
-                  className="shrink-0 rounded border border-red-200 px-1.5 py-0.5 text-[11px] text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:hover:bg-red-950"
+                  className="raven-btn raven-btn-danger raven-btn-sm"
                 >
                   {deleteBusyId === node.data.doc.id ? "…" : "Delete"}
                 </button>
-                <span
-                  className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline ${node.data.doc.status === "published" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"}`}
-                >
+                <span className={`raven-badge ${node.data.doc.status === "published" ? "raven-badge-published" : "raven-badge-default"}`}>
                   {node.data.doc.status}
                 </span>
               </div>
             )}
           </Tree>
-          <p className="border-t px-3 py-2 text-xs text-zinc-500">
-            {docs.length} node{docs.length === 1 ? "" : "s"} · drag to reorder · + child · Rename · Delete ·{" "}
-            <span className="font-mono">/admin/taxonomy</span>
-          </p>
+          <div className="raven-taxonomy-tree-footer">
+            {docs.length} node{docs.length === 1 ? "" : "s"} · drag to reorder · + child · Rename · Delete · <span style={{ fontFamily: "monospace" }}>/admin/taxonomy</span>
+          </div>
         </div>
       )}
     </div>

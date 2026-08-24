@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
-import { useField, useFormFields } from "@payloadcms/ui";
+import { useField } from "@payloadcms/ui";
 import { BlockRenderer, type ReaderBlock } from "@/components/reader/Blocks";
+import { ChapterBlocksField } from "./ChapterBlocksField";
+import "./admin-components.css";
 
-export function ChapterSplitView() {
-  const blocksField = useField<ReaderBlock[]>({ path: "blocks" });
+export function ChapterSplitView(props?: { path?: string }) {
+  const path = props?.path || "blocks";
+  const blocksField = useField<ReaderBlock[]>({ path });
   const titleField = useField<string>({ path: "title" });
   const slugField = useField<string>({ path: "slug" });
   const typeField = useField<string>({ path: "type" });
@@ -20,40 +23,55 @@ export function ChapterSplitView() {
 
   if (!isChapterish) {
     return (
-      <p className="rounded-md border border-dashed p-4 text-xs text-muted-foreground">
-        Split preview appears for chapters/topics. Set Type to Chapter or Topic to see the live preview alongside the block editor.
-      </p>
+      <div className="raven-admin-wrap">
+        <div className="raven-empty-state">
+          <p className="raven-subtitle">
+            Split preview appears for chapters and topics. Set <strong>Type</strong> to <em>Chapter</em> or <em>Topic</em> to see the live preview alongside the block editor.
+          </p>
+        </div>
+      </div>
     );
   }
 
-  return (
-    <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-      <div className="min-w-0">
-        <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-medium">Editor</span>
-          <span>— blocks above apply here; Save to persist</span>
-        </div>
-        <div className="rounded-lg border bg-muted/10 p-3 text-xs text-muted-foreground">
-          Edit blocks in the field above, then save. Preview updates live on the right using the same renderers as the public page.
-        </div>
-      </div>
+  const status = String(statusField.value ?? "draft");
 
-      <div className="min-w-0 rounded-lg border bg-white p-4 dark:bg-zinc-950">
-        <div className="mb-3 border-b pb-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Live preview</p>
-          <h2 className="mt-1 text-lg font-semibold leading-tight">{(titleField.value as string) || "Untitled chapter"}</h2>
-          <p className="mt-1 font-mono text-xs text-muted-foreground">
-            /{String(slugField.value ?? "")} · {String(typeField.value ?? "")} · {String(statusField.value ?? "draft")}
-          </p>
+  return (
+    <div className="raven-admin-wrap">
+      <div className="raven-split-view">
+        <div className="raven-card">
+          <div className="raven-card-header">
+            <div>
+              <h3 className="raven-title" style={{ fontSize: "1rem" }}>Chapter Block Editor</h3>
+              <p className="raven-subtitle">Edits in this editor save automatically with the Node document.</p>
+            </div>
+          </div>
+          <ChapterBlocksField path={path} />
         </div>
-        <BlockRenderer blocks={raw} />
+
+        <div className="raven-card raven-preview-panel">
+          <div className="raven-card-header">
+            <div>
+              <p className="raven-label-sm">Live Preview</p>
+              <h2 className="raven-title">
+                {(titleField.value as string) || "Untitled chapter"}
+              </h2>
+              <p className="raven-meta">
+                /{String(slugField.value ?? "")} · {String(typeField.value ?? "chapter")}
+              </p>
+            </div>
+            <span className={`raven-badge ${status === "published" ? "raven-badge-published" : "raven-badge-default"}`}>
+              {status}
+            </span>
+          </div>
+          <div className="raven-preview-scroll">
+            <div className="raven-live-preview-blocks">
+              <BlockRenderer blocks={raw} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 export default ChapterSplitView;
-
-function _useFormFieldsShim() {
-  void useFormFields;
-}

@@ -40,7 +40,9 @@ export async function resolveChapterPath(
   const branch = typeToSlug.get("branch");
   const year = typeToSlug.get("year");
   const subject = typeToSlug.get("subject");
-  const chapter = chain.find((n) => n.type === "chapter")?.slug ?? chain[chain.length - 1]?.slug;
+  const chapterDoc = chain.find((n) => n.type === "chapter");
+  if (!chapterDoc) return null;
+  const chapter = chapterDoc.slug;
 
   if (!branch || !year || !subject || !chapter) return null;
   return `/${branch}/${year}/${subject}/${chapter}`;

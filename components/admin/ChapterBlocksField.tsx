@@ -16,7 +16,7 @@ import { useField } from "@payloadcms/ui";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-type BlockRow = {
+export type BlockRow = {
   id?: string;
   blockType: "markdown" | "image" | "youtube";
   blockName?: string;
@@ -35,10 +35,12 @@ function uid() {
 
 function RowShell({
   id,
+  blockType,
   children,
   onRemove,
 }: {
   id: string;
+  blockType: string;
   children: React.ReactNode;
   onRemove: () => void;
 }) {
@@ -46,32 +48,45 @@ function RowShell({
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.6 : 1,
+    opacity: isDragging ? 0.5 : 1,
   };
+
+  const badgeClass =
+    blockType === "markdown"
+      ? "raven-badge-markdown"
+      : blockType === "image"
+        ? "raven-badge-image"
+        : blockType === "youtube"
+          ? "raven-badge-youtube"
+          : "raven-badge-default";
+
   return (
-    <div ref={setNodeRef} style={style} className="rounded-lg border bg-card">
-      <div className="flex items-center gap-2 border-b bg-muted/40 px-3 py-2">
+    <div ref={setNodeRef} style={style} className="raven-block-card">
+      <div className="raven-block-header">
         <button
           type="button"
           aria-label="Drag to reorder"
-          className="cursor-grab touch-none rounded px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted active:cursor-grabbing"
+          className="raven-drag-btn"
           {...attributes}
           {...listeners}
         >
           ⋮⋮
         </button>
-        <span className="min-w-0 flex-1 text-xs font-medium text-muted-foreground">{id.slice(0, 8)}</span>
-        <button type="button" onClick={onRemove} className="rounded border px-2 py-1 text-xs hover:bg-muted">
+        <span className={`raven-badge ${badgeClass}`}>{blockType}</span>
+        <span className="raven-meta" style={{ flex: 1, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {id.slice(0, 8)}
+        </span>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="raven-btn raven-btn-danger raven-btn-sm"
+        >
           Remove
         </button>
       </div>
-      <div className="p-3">{children}</div>
+      <div className="raven-block-body">{children}</div>
     </div>
   );
-}
-
-function fieldPathForBlock(basePath: string, index: number, key: string) {
-  return `${basePath}.${index}.${key}`;
 }
 
 export function ChapterBlocksField(props: { path: string }) {
@@ -112,16 +127,9 @@ export function ChapterBlocksField(props: { path: string }) {
     [setValue, value],
   );
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIndex = value.findIndex((r) => (r.id ?? String(value.indexOf(r))) === String(active.id));
-      const newIndex = value.findIndex((r) => (r.id ?? String(value.indexOf(r))) === String(over.id));
-      if (oldIndex === -1 || newIndex === -1) return;
-      const next = [...value];
-      const [moved] = next.splice(oldIndex, 1);
-      next.splice(newIndex, 0, moved);
+  const updateAt = useCallback(
+    (index: number, patch: Partial<BlockRow>) => {
+      const next = value.map((row, i) => (i === index ? { ...row, ...patch } : row));
       setValue(next);
     },
     [setValue, value],
@@ -129,43 +137,75 @@ export function ChapterBlocksField(props: { path: string }) {
 
   const ids = useMemo(() => value.map((r, i) => r.id ?? `row-${i}-${r.blockType}`), [value]);
 
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = ids.indexOf(String(active.id));
+      const newIndex = ids.indexOf(String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return;
+      const next = [...value];
+      const [moved] = next.splice(oldIndex, 1);
+      next.splice(newIndex, 0, moved);
+      setValue(next);
+    },
+    [setValue, value, ids],
+  );
+
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium">Chapter blocks</span>
-        <span className="text-xs text-muted-foreground">markdown · image · youtube — drag ⋮⋮ to reorder</span>
-        <div className="ml-auto flex gap-2">
-          <button type="button" onClick={() => addBlock("markdown")} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>Blocks</span>
+          <span className="raven-subtitle" style={{ fontSize: "0.75rem" }}>drag ⋮⋮ to reorder</span>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
+          <button
+            type="button"
+            onClick={() => addBlock("markdown")}
+            className="raven-btn"
+          >
             + Markdown
           </button>
-          <button type="button" onClick={() => addBlock("image")} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">
+          <button
+            type="button"
+            onClick={() => addBlock("image")}
+            className="raven-btn"
+          >
             + Image
           </button>
-          <button type="button" onClick={() => addBlock("youtube")} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">
+          <button
+            type="button"
+            onClick={() => addBlock("youtube")}
+            className="raven-btn"
+          >
             + YouTube
           </button>
         </div>
       </div>
 
       {value.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-          No blocks yet. Add one above — content saves with the Node document.
+        <div className="raven-empty-state">
+          <p style={{ margin: "0 0 0.25rem 0", fontWeight: 600, fontSize: "0.875rem" }}>No blocks yet</p>
+          <p className="raven-subtitle">Add a Markdown, Image, or YouTube block above to start building chapter content.</p>
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3">
+            <div className="raven-blocks-stack">
               {value.map((row, index) => {
                 const rowId = ids[index];
-                const p = (k: string) => fieldPathForBlock(path, index, k);
                 return (
-                  <RowShell key={rowId} id={rowId} onRemove={() => removeAt(index)}>
-                    {row.blockType === "markdown" && <MarkdownRow pathFor={p} />}
-                    {row.blockType === "image" && <ImageRow pathFor={p} />}
-                    {row.blockType === "youtube" && <YoutubeRow pathFor={p} />}
-                    <p className="mt-2 text-[11px] text-muted-foreground">
-                      Type: <span className="font-mono">{row.blockType}</span>
-                    </p>
+                  <RowShell key={rowId} id={rowId} blockType={row.blockType} onRemove={() => removeAt(index)}>
+                    {row.blockType === "markdown" && (
+                      <MarkdownRow row={row} onChange={(patch) => updateAt(index, patch)} />
+                    )}
+                    {row.blockType === "image" && (
+                      <ImageRow row={row} onChange={(patch) => updateAt(index, patch)} />
+                    )}
+                    {row.blockType === "youtube" && (
+                      <YoutubeRow row={row} onChange={(patch) => updateAt(index, patch)} />
+                    )}
                   </RowShell>
                 );
               })}
@@ -174,21 +214,6 @@ export function ChapterBlocksField(props: { path: string }) {
         </DndContext>
       )}
     </div>
-  );
-}
-
-function FieldRow({ label, path, placeholder }: { label: string; path: string; placeholder?: string }) {
-  const f = useField<string>({ path });
-  return (
-    <label className="grid gap-1 text-xs">
-      <span className="font-medium text-muted-foreground">{label}</span>
-      <input
-        value={(f.value as string) ?? ""}
-        onChange={(e) => f.setValue(e.target.value as never)}
-        placeholder={placeholder}
-        className="rounded-md border bg-background px-2.5 py-2 text-sm"
-      />
-    </label>
   );
 }
 
@@ -205,108 +230,164 @@ function htmlFromText(text: string) {
   return paras || "<p></p>";
 }
 
-function textFromHtml(html: string) {
-  return html
-    .replace(/<\/p><p>/g, "\n\n")
-    .replace(/<br\s*\/?>/g, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&nbsp;/g, " ")
-    .trim();
+function isHtmlContent(value: string): boolean {
+  return value.trim().startsWith("<");
 }
 
-function TiptapEditor({ path }: { path: string }) {
-  const field = useField<string>({ path });
-  const raw = (field.value as string) ?? "";
+function toEditorHtml(raw: string): string {
+  if (!raw) return "<p></p>";
+  return isHtmlContent(raw) ? raw : htmlFromText(raw);
+}
+
+function TiptapEditor({
+  content,
+  onChange,
+}: {
+  content: string;
+  onChange: (html: string) => void;
+}) {
   const editor = useEditor({
     extensions: [StarterKit],
-    content: htmlFromText(raw),
+    content: toEditorHtml(content),
     onUpdate: ({ editor: ed }) => {
-      field.setValue(textFromHtml(ed.getHTML()) as never);
+      onChange(ed.getHTML());
     },
   });
 
   useEffect(() => {
     if (!editor) return;
-    const nextHtml = htmlFromText(raw);
-    if (textFromHtml(editor.getHTML()) !== raw) {
-      editor.commands.setContent(nextHtml, { emitUpdate: false } as never);
+    const cur = editor.getHTML();
+    const next = toEditorHtml(content);
+    if (cur !== next && (cur === "<p></p>" || cur === "")) {
+      editor.commands.setContent(next, { emitUpdate: false } as never);
     }
-  }, [editor, raw]);
+  }, [editor, content]);
 
-  if (!editor) return <div className="rounded-md border bg-background p-3 text-xs text-muted-foreground">Loading editor…</div>;
+  if (!editor) return <div className="raven-empty-state" style={{ padding: "1rem" }}>Loading editor…</div>;
 
   return (
-    <div className="overflow-hidden rounded-md border bg-background">
-      <div className="flex flex-wrap gap-1 border-b bg-muted/40 p-1.5">
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>
-          B
+    <div className="raven-editor-box">
+      <div className="raven-toolbar">
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} label="Bold">
+          <strong>B</strong>
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")}>
-          I
+        <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} label="Italic">
+          <em>I</em>
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")}>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} label="Bullet List">
           • List
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")}>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} label="Numbered List">
           1. List
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })}>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} label="Heading 2">
           H2
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })}>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} label="Heading 3">
           H3
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")}>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} label="Quote">
           Quote
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive("codeBlock")}>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive("codeBlock")} label="Code block">
           Code
         </ToolbarButton>
       </div>
-      <EditorContent editor={editor} className="prose prose-sm max-w-none p-3 focus-within:outline-none [&_.tiptap]:min-h-[120px] [&_.tiptap]:outline-none" />
+      <EditorContent editor={editor} />
     </div>
   );
 }
 
-function ToolbarButton({ children, onClick, active }: { children: React.ReactNode; onClick: () => void; active?: boolean }) {
+function ToolbarButton({ children, onClick, active, label }: { children: React.ReactNode; onClick: () => void; active?: boolean; label?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded px-2 py-1 text-xs font-medium ${active ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" : "hover:bg-muted"}`}
+      title={label}
+      className={`raven-toolbar-btn ${active ? "active" : ""}`}
     >
       {children}
     </button>
   );
 }
 
-function MarkdownRow({ pathFor }: { pathFor: (k: string) => string }) {
+function MarkdownRow({
+  row,
+  onChange,
+}: {
+  row: BlockRow;
+  onChange: (patch: Partial<BlockRow>) => void;
+}) {
   return (
-    <div className="space-y-2">
-      <TiptapEditor path={pathFor("content")} />
+    <div>
+      <TiptapEditor
+        content={row.content ?? ""}
+        onChange={(content) => onChange({ content })}
+      />
     </div>
   );
 }
 
-function ImageRow({ pathFor }: { pathFor: (k: string) => string }) {
+function ImageRow({
+  row,
+  onChange,
+}: {
+  row: BlockRow;
+  onChange: (patch: Partial<BlockRow>) => void;
+}) {
   return (
-    <div className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <FieldRow label="Image URL" path={pathFor("url")} placeholder="https://… or /storage/… — or use Upload below" />
-        <FieldRow label="Alt text" path={pathFor("alt")} placeholder="Describe the image (required)" />
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div className="raven-form-grid raven-form-grid-2">
+        <div className="raven-field-group">
+          <label className="raven-field-label">Image URL</label>
+          <input
+            value={row.url ?? ""}
+            onChange={(e) => onChange({ url: e.target.value })}
+            placeholder="https://… or /storage/… — or use Upload below"
+            className="raven-input"
+          />
+        </div>
+        <div className="raven-field-group">
+          <label className="raven-field-label">Alt text</label>
+          <input
+            value={row.alt ?? ""}
+            onChange={(e) => onChange({ alt: e.target.value })}
+            placeholder="Describe the image (required)"
+            className="raven-input"
+          />
+        </div>
       </div>
-      <FieldRow label="Caption (optional)" path={pathFor("caption")} placeholder="Caption" />
-      <SupabaseUpload urlPath={pathFor("url")} altPath={pathFor("alt")} />
+      <div className="raven-field-group">
+        <label className="raven-field-label">Caption (optional)</label>
+        <input
+          value={row.caption ?? ""}
+          onChange={(e) => onChange({ caption: e.target.value })}
+          placeholder="Caption"
+          className="raven-input"
+        />
+      </div>
+      <SupabaseUpload
+        url={row.url ?? ""}
+        alt={row.alt ?? ""}
+        onUploadSuccess={(url, autoAlt) => {
+          const patch: Partial<BlockRow> = { url };
+          if (autoAlt && !row.alt) patch.alt = autoAlt;
+          onChange(patch);
+        }}
+      />
     </div>
   );
 }
 
-function SupabaseUpload({ urlPath, altPath }: { urlPath: string; altPath: string }) {
-  const urlField = useField<string>({ path: urlPath });
-  const altField = useField<string>({ path: altPath });
+function SupabaseUpload({
+  url,
+  alt,
+  onUploadSuccess,
+}: {
+  url: string;
+  alt: string;
+  onUploadSuccess: (url: string, alt?: string) => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -325,18 +406,18 @@ function SupabaseUpload({ urlPath, altPath }: { urlPath: string; altPath: string
       }
       setBusy(true);
       try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const key = `chapters/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("media").upload(key, file, { contentType: file.type, upsert: false });
-        if (upErr) throw new Error(upErr.message);
-        const { data } = supabase.storage.from("media").getPublicUrl(key);
-        urlField.setValue((data.publicUrl ?? "") as never);
-        if (!(altField.value as string)?.trim()) {
+        const form = new FormData();
+        form.set("file", file);
+        const res = await fetch("/api/media-upload", { method: "POST", body: form });
+        const json = (await res.json()) as { url?: string; error?: string };
+        if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`);
+        if (!json.url) throw new Error("Upload returned no URL.");
+        let autoAlt: string | undefined;
+        if (!alt?.trim()) {
           const base = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
-          if (base) altField.setValue(base as never);
+          if (base) autoAlt = base;
         }
+        onUploadSuccess(json.url, autoAlt);
       } catch (ex) {
         setErr(ex instanceof Error ? ex.message : String(ex));
       } finally {
@@ -344,25 +425,23 @@ function SupabaseUpload({ urlPath, altPath }: { urlPath: string; altPath: string
         e.target.value = "";
       }
     },
-    [altField, urlField],
+    [alt, onUploadSuccess],
   );
 
-  const currentUrl = (urlField.value as string) ?? "";
-
   return (
-    <div className="rounded-md border bg-muted/20 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="inline-flex cursor-pointer items-center rounded-md border bg-background px-3 py-1.5 text-xs hover:bg-muted">
-          <input type="file" accept="image/*" className="hidden" onChange={onPick} disabled={busy} />
+    <div className="raven-upload-box">
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.5rem" }}>
+        <label className="raven-btn" style={{ cursor: "pointer" }}>
+          <input type="file" accept="image/*" style={{ display: "none" }} onChange={onPick} disabled={busy} />
           {busy ? "Uploading…" : "Upload to Supabase Storage"}
         </label>
-        <span className="text-[11px] text-muted-foreground">Bucket: media — creates URL automatically. Ensure the bucket exists and is public.</span>
+        <span className="raven-subtitle" style={{ fontSize: "0.6875rem" }}>Bucket: media — creates public URL automatically.</span>
       </div>
-      {err && <p className="mt-2 rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{err}</p>}
-      {currentUrl && (
-        <div className="mt-3">
-          <img src={currentUrl} alt={(altField.value as string) ?? ""} className="max-h-48 rounded border object-contain" />
-          <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">{currentUrl}</p>
+      {err && <p style={{ color: "#f87171", fontSize: "0.75rem", margin: "0.5rem 0 0 0" }}>{err}</p>}
+      {url && (
+        <div style={{ marginTop: "0.75rem", textAlign: "center" }}>
+          <img src={url} alt={alt || ""} style={{ maxHeight: "180px", maxWidth: "100%", borderRadius: "6px", objectFit: "contain" }} />
+          <p className="raven-meta" style={{ marginTop: "0.25rem", wordBreak: "break-all" }}>{url}</p>
         </div>
       )}
     </div>
@@ -388,10 +467,14 @@ function extractYoutubeId(input: string) {
   return s;
 }
 
-function YoutubeRow({ pathFor }: { pathFor: (k: string) => string }) {
-  const idField = useField<string>({ path: pathFor("videoId") });
-  const titleField = useField<string>({ path: pathFor("title") });
-  const raw = ((idField.value as string) ?? "").trim();
+function YoutubeRow({
+  row,
+  onChange,
+}: {
+  row: BlockRow;
+  onChange: (patch: Partial<BlockRow>) => void;
+}) {
+  const raw = (row.videoId ?? "").trim();
   const norm = raw ? extractYoutubeId(raw) : "";
   const isValidId = /^[a-zA-Z0-9_-]{11}$/.test(norm);
   const thumb = isValidId ? `https://i.ytimg.com/vi/${norm}/hqdefault.jpg` : "";
@@ -399,46 +482,61 @@ function YoutubeRow({ pathFor }: { pathFor: (k: string) => string }) {
   const normalize = useCallback(() => {
     if (!raw) return;
     const next = extractYoutubeId(raw);
-    if (next !== raw && /^[a-zA-Z0-9_-]{11}$/.test(next)) idField.setValue(next as never);
-  }, [idField, raw]);
+    if (next !== raw && /^[a-zA-Z0-9_-]{11}$/.test(next)) {
+      onChange({ videoId: next });
+    }
+  }, [onChange, raw]);
 
   return (
-    <div className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="grid gap-1 text-xs">
-          <span className="font-medium text-muted-foreground">YouTube video ID or URL</span>
-          <div className="flex gap-2">
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div className="raven-form-grid raven-form-grid-2">
+        <div className="raven-field-group">
+          <label className="raven-field-label">YouTube video ID or URL</label>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
             <input
-              value={(idField.value as string) ?? ""}
-              onChange={(e) => idField.setValue(e.target.value as never)}
+              value={row.videoId ?? ""}
+              onChange={(e) => onChange({ videoId: e.target.value })}
               onBlur={normalize}
               placeholder="dQw4w9WgXcQ or https://youtube.com/watch?v=…"
-              className="min-w-0 flex-1 rounded-md border bg-background px-2.5 py-2 text-sm"
+              className="raven-input"
+              style={{ flex: 1 }}
             />
-            <button type="button" onClick={normalize} className="shrink-0 rounded-md border px-3 py-2 text-xs hover:bg-muted">
+            <button
+              type="button"
+              onClick={normalize}
+              className="raven-btn"
+            >
               Normalize
             </button>
           </div>
-          {raw && !isValidId && <span className="text-[11px] text-amber-600">Enter an 11-char ID or a YouTube URL — saved as the ID.</span>}
-          {isValidId && raw !== norm && <span className="text-[11px] text-muted-foreground">Will save as: {norm}</span>}
+          {raw && !isValidId && <span style={{ fontSize: "0.6875rem", color: "#fbbf24" }}>Enter an 11-char ID or a YouTube URL — saved as the ID.</span>}
+          {isValidId && raw !== norm && <span className="raven-meta">Will save as: {norm}</span>}
         </div>
-        <FieldRow label="Title" path={pathFor("title")} placeholder="Video title (shown on the card)" />
+        <div className="raven-field-group">
+          <label className="raven-field-label">Title</label>
+          <input
+            value={row.title ?? ""}
+            onChange={(e) => onChange({ title: e.target.value })}
+            placeholder="Video title (shown on the card)"
+            className="raven-input"
+          />
+        </div>
       </div>
       {isValidId ? (
-        <div className="overflow-hidden rounded-lg border">
-          <div className="relative aspect-video bg-zinc-900">
-            <img src={thumb} alt={(titleField.value as string) ?? raw} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 grid place-items-center bg-black/25">
-              <div className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900">▶ Preview</div>
+        <div className="raven-yt-box">
+          <div className="raven-yt-thumb">
+            <img src={thumb} alt={row.title ?? raw} />
+            <div className="raven-yt-play">
+              <span className="raven-yt-play-pill">▶ Preview</span>
             </div>
           </div>
-          <div className="bg-muted/30 px-3 py-2 text-xs">
-            <span className="font-medium">{(titleField.value as string) || "Untitled"}</span>
-            <span className="text-muted-foreground"> · {norm}</span>
+          <div className="raven-yt-info">
+            <span style={{ fontWeight: 600 }}>{row.title || "Untitled"}</span>
+            <span className="raven-meta" style={{ margin: 0 }}>{norm}</span>
           </div>
         </div>
       ) : (
-        <p className="text-[11px] text-muted-foreground">Paste an ID or URL to see the thumbnail facade — no iframe loads in this view.</p>
+        <p className="raven-subtitle" style={{ fontSize: "0.6875rem" }}>Paste an ID or URL to see the thumbnail facade — no iframe loads in this view.</p>
       )}
     </div>
   );
