@@ -36,6 +36,13 @@ const serwist = new Serwist({
         ],
       }),
     },
+    {
+      matcher: ({ url }: { url: URL }) => url.pathname === "/search-index.json" || url.pathname === "/api/search-index",
+      handler: new StaleWhileRevalidate({
+        cacheName: "raven-search-index",
+        plugins: [new ExpirationPlugin({ maxEntries: 2, maxAgeSeconds: 7 * 24 * 60 * 60, maxAgeFrom: "last-used" })],
+      }),
+    },
   ],
 });
 

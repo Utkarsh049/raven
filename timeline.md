@@ -134,7 +134,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 **Estimated time: 4–6 days**
 
 - [x] Generate a lightweight search index (titles, tags, short excerpts) as part of the publish hook
-- [ ] Ship the index as a static JSON asset, cached by the service worker
+- [x] Ship the index as a static JSON asset, cached by the service worker
 - [ ] Build the client-side search UI using Fuse.js or FlexSearch
 - [ ] Test: search while offline, confirm results return with no network call
 
