@@ -4,6 +4,57 @@ import { notFound } from "next/navigation";
 
 type Params = { branch: string; year: string; subject: string; chapter: string };
 
+export const dynamicParams = true;
+
+export async function generateStaticParams(): Promise<Params[]> {
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+      collection: "nodes",
+      pagination: false,
+      depth: 0,
+      select: { slug: true, type: true, parent: true, status: true },
+      overrideAccess: false,
+    });
+    const docs = (res.docs ?? []) as Array<{ id: string | number; slug: string; type: string; parent: unknown; status: string }>;
+    const byId = new Map<string, (typeof docs)[number]>();
+    for (const d of docs) byId.set(String(d.id), d);
+    const parentIdOf = (v: unknown): string | null => {
+      if (!v) return null;
+      if (typeof v === "string") return v;
+      if (typeof v === "object" && v !== null && "id" in (v as Record<string, unknown>)) {
+        const id = (v as { id?: unknown }).id;
+        return typeof id === "string" || typeof id === "number" ? String(id) : null;
+      }
+      return null;
+    };
+    const params: Params[] = [];
+    for (const doc of docs) {
+      if (doc.type !== "chapter" || doc.status !== "published") continue;
+      const chain: Array<{ slug: string; type: string; parent: unknown; id: string }> = [];
+      let curId: string | null = String(doc.id);
+      const seen = new Set<string>();
+      for (let i = 0; i < 12 && curId; i++) {
+        if (seen.has(curId)) break;
+        seen.add(curId);
+        const node = byId.get(curId);
+        if (!node) break;
+        chain.unshift({ id: curId, slug: node.slug, type: node.type, parent: node.parent });
+        curId = parentIdOf(node.parent);
+      }
+      const m = new Map(chain.map((n) => [n.type, n.slug] as const));
+      const branch = m.get("branch");
+      const year = m.get("year");
+      const subject = m.get("subject");
+      const chapter = chain.find((n) => n.type === "chapter")?.slug;
+      if (branch && year && subject && chapter) params.push({ branch, year, subject, chapter });
+    }
+    return params;
+  } catch {
+    return [];
+  }
+}
+
 export default async function ChapterPage({ params }: { params: Promise<Params> }) {
   const { branch, year, subject, chapter } = await params;
 
