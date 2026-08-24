@@ -84,7 +84,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 - [x] Static generation (`generateStaticParams`) for all published chapters/subjects
 - [x] `fallback: 'blocking'` for newly published pages not yet statically built
 - [x] Render markdown blocks from pre-compiled HTML (no client-side parsing)
-- [ ] Image blocks via `next/image`, reserved aspect ratio + `blurDataURL` placeholders, `priority` only on the first above-the-fold image
+- [x] Image blocks via `next/image`, reserved aspect ratio + `blurDataURL` placeholders, `priority` only on the first above-the-fold image
 - [ ] YouTube blocks as click-to-play facade thumbnails (no auto-loaded iframe)
 - [ ] Breadcrumb-style navigation: Year → Subject → Chapter
 - [ ] Mobile-first responsive pass
