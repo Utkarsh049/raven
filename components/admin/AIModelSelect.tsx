@@ -9,8 +9,9 @@ type ModelsRes = { models?: string[]; fallback?: string[]; live?: boolean; error
 export function AIModelSelect(props: TextFieldClientProps) {
   const field = useField<string>({ path: props.field.name as string });
   const value = String(field.value ?? "");
-  const providerField = useFormFields(([fields]) => (fields as Record<string, { value?: unknown }>)?.provider?.value);
-  const providerVal = String(providerField ?? "");
+  const providerVal = String(useFormFields(([fields]) => (fields as Record<string, { value?: unknown }>)?.provider?.value) ?? "");
+  const apiKeyVal = String(useFormFields(([fields]) => (fields as Record<string, { value?: unknown }>)?.apiKey?.value) ?? "");
+  const baseUrlVal = String(useFormFields(([fields]) => (fields as Record<string, { value?: unknown }>)?.baseUrl?.value) ?? "");
   const [models, setModels] = useState<string[]>([]);
   const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,11 @@ export function AIModelSelect(props: TextFieldClientProps) {
     setLoading(true);
     setErr(null);
     try {
-      const r = await fetch("/api/ai/models", { cache: "no-store", credentials: "include" });
+      const hasPreviewKey = Boolean(apiKeyVal && apiKeyVal.trim() && apiKeyVal.trim() !== "••••••••" && apiKeyVal.trim() !== "********");
+      const qs = hasPreviewKey && providerVal
+        ? `?provider=${encodeURIComponent(providerVal)}&apiKey=${encodeURIComponent(apiKeyVal)}&baseUrl=${encodeURIComponent(baseUrlVal)}`
+        : "";
+      const r = await fetch(`/api/ai/models${qs}`, { cache: "no-store", credentials: "include" });
       const j = (await r.json()) as ModelsRes;
       if (!r.ok) {
         setErr(j.error ?? `Failed (${r.status})`);
@@ -39,11 +44,11 @@ export function AIModelSelect(props: TextFieldClientProps) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [providerVal, apiKeyVal, baseUrlVal]);
 
   useEffect(() => {
     fetchModels();
-  }, [fetchModels, providerVal]);
+  }, [fetchModels]);
 
   const options = [
     { label: "Default (provider default)", value: "" },
