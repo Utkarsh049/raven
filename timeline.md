@@ -86,7 +86,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 - [x] Render markdown blocks from pre-compiled HTML (no client-side parsing)
 - [x] Image blocks via `next/image`, reserved aspect ratio + `blurDataURL` placeholders, `priority` only on the first above-the-fold image
 - [x] YouTube blocks as click-to-play facade thumbnails (no auto-loaded iframe)
-- [ ] Breadcrumb-style navigation: Year → Subject → Chapter
+- [x] Breadcrumb-style navigation: Year → Subject → Chapter
 - [ ] Mobile-first responsive pass
 
 **Deliverable:** a stranger can browse real, published content on mobile, start to finish, with no visible loading jank.

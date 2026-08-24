@@ -91,14 +91,22 @@ export default async function ChapterPage({ params }: { params: Promise<Params> 
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <nav className="mb-6 text-sm text-zinc-500">
-        <Link href={`/${branch}`} className="hover:underline">{branch}</Link>
-        {" / "}
-        <Link href={`/${branch}/${year}`} className="hover:underline">{year}</Link>
-        {" / "}
-        <Link href={`/${branch}/${year}/${subject}`} className="hover:underline">{subject}</Link>
-        {" / "}
-        <span className="font-medium text-zinc-900 dark:text-zinc-100">{chapter}</span>
+      <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-1 text-sm text-zinc-500">
+        <Link href={`/${branch}`} className="rounded px-1 py-0.5 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
+          {(branchNode.title as string) || branch}
+        </Link>
+        <span aria-hidden className="text-zinc-400">/</span>
+        <Link href={`/${branch}/${year}`} className="rounded px-1 py-0.5 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
+          {(yearNode.title as string) || year}
+        </Link>
+        <span aria-hidden className="text-zinc-400">/</span>
+        <Link href={`/${branch}/${year}/${subject}`} className="rounded px-1 py-0.5 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
+          {(subjectNode.title as string) || subject}
+        </Link>
+        <span aria-hidden className="text-zinc-400">/</span>
+        <span aria-current="page" className="font-medium text-zinc-900 dark:text-zinc-100">
+          {chapterNode.title as string}
+        </span>
       </nav>
       <h1 className="text-3xl font-semibold tracking-tight">{chapterNode.title as string}</h1>
       <div className="mt-8">
