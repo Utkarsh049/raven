@@ -4,7 +4,21 @@ import { usePinsStore } from "@/lib/pins-store";
 
 export function PinButton({ id, href, title, kind }: { id: string; href: string; title: string; kind: "subject" | "chapter" }) {
   const toggle = usePinsStore((s) => s.toggle);
+  const hydrated = usePinsStore((s) => s.hydrated);
   const pinned = usePinsStore((s) => s.pins.some((p) => p.id === id));
+
+  if (!hydrated) {
+    return (
+      <button
+        type="button"
+        disabled
+        aria-label="Pin"
+        className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium bg-background opacity-60"
+      >
+        <span aria-hidden>☆</span> Pin
+      </button>
+    );
+  }
 
   return (
     <button

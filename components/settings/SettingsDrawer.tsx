@@ -76,7 +76,7 @@ export function SettingsDrawer() {
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
               <section className="space-y-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Branch</h3>
-                <p className="text-xs text-muted-foreground">Choose which branch to browse. Saved offline.</p>
+                <p className="text-xs text-muted-foreground">Preferred branch for navigation. Saved offline.</p>
                 {loadingBranches ? (
                   <p className="text-sm text-muted-foreground">Loading branches…</p>
                 ) : branches.length === 0 ? (
@@ -84,7 +84,7 @@ export function SettingsDrawer() {
                 ) : (
                   <div className="grid gap-2">
                     <label htmlFor="branch-select" className="text-xs font-medium">
-                      Branch
+                      Preferred branch
                     </label>
                     <select
                       id="branch-select"
@@ -92,14 +92,20 @@ export function SettingsDrawer() {
                       onChange={(e) => setBranchSlug(e.target.value || null)}
                       className="h-9 w-full rounded-md border bg-background px-3 text-sm"
                     >
-                      <option value="">— All branches —</option>
+                      <option value="">— No preference —</option>
                       {branches.map((b) => (
                         <option key={b.slug} value={b.slug}>
                           {b.title} ({b.slug})
                         </option>
                       ))}
                     </select>
-                    {branchSlug && <p className="text-xs text-muted-foreground">Active: {branchSlug}</p>}
+                    {branchSlug ? (
+                      <a href={`/${branchSlug}`} className="text-xs text-primary underline">
+                        Go to {branchSlug}
+                      </a>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Browse from the home page or a chapter link.</p>
+                    )}
                   </div>
                 )}
               </section>

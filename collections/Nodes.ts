@@ -89,6 +89,11 @@ export const Nodes: CollectionConfig = {
           const isChapterLike = (t?: string) => t === "chapter" || t === "topic";
           const isAncestorLike = (t?: string) => t === "branch" || t === "year" || t === "subject";
 
+          try {
+            const { writeSearchIndex } = await import("../lib/search");
+            await writeSearchIndex(req.payload as never);
+          } catch {}
+
           if (isChapterLike(docType) || (previousDoc && isChapterLike(prevType))) {
             const newPath = docStatus === "published" && isChapterLike(docType) ? await resolveChapterPath(req.payload as never, docId) : null;
             let oldPath: string | null = null;
@@ -171,6 +176,10 @@ export const Nodes: CollectionConfig = {
     ],
     afterDelete: [
       async ({ doc, req }) => {
+        try {
+          const { writeSearchIndex } = await import("../lib/search");
+          await writeSearchIndex(req.payload as never);
+        } catch {}
         try {
           const { revalidatePath } = await import("next/cache");
           const docType = (doc as { type?: string })?.type;

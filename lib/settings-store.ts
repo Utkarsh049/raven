@@ -47,16 +47,24 @@ export const useSettingsStore = create<SettingsState>()(
         syncToDexie({ branchSlug: get().branchSlug, theme });
       },
       hydrate: async () => {
-        if (get().hydrated) return;
         try {
           const [branchSlug, theme] = await Promise.all([getPref("branchSlug"), getPref("theme")]);
-          const next: Partial<SettingsState> = { hydrated: true };
-          if (branchSlug) next.branchSlug = branchSlug;
-          if (theme && (theme === "light" || theme === "dark" || theme === "system")) next.theme = theme as Theme;
-          set(next as SettingsState);
-          try {
-            applyTheme((next.theme as Theme) ?? get().theme);
-          } catch {}
+          const hasDexieData = Boolean(branchSlug || theme);
+          if (hasDexieData) {
+            const next: Partial<SettingsState> = {};
+            if (branchSlug) next.branchSlug = branchSlug;
+            if (theme && (theme === "light" || theme === "dark" || theme === "system")) next.theme = theme as Theme;
+            set(next as SettingsState);
+            try {
+              applyTheme((next.theme as Theme) ?? get().theme);
+            } catch {}
+            syncToDexie({ branchSlug: (next.branchSlug as string | null) ?? get().branchSlug, theme: (next.theme as Theme) ?? get().theme });
+          } else if (!get().hydrated) {
+            try {
+              applyTheme(get().theme);
+            } catch {}
+          }
+          set({ hydrated: true });
         } catch {
           set({ hydrated: true });
         }
@@ -68,11 +76,9 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (s) => ({ branchSlug: s.branchSlug, theme: s.theme }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          state.hydrated = true;
           try {
             applyTheme(state.theme);
           } catch {}
-          syncToDexie({ branchSlug: state.branchSlug, theme: state.theme });
         }
       },
     },
