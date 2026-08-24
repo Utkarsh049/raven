@@ -90,26 +90,26 @@ export default async function ChapterPage({ params }: { params: Promise<Params> 
   const blocks = (chapterNode.blocks ?? []) as ReaderBlock[];
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-1 text-sm text-zinc-500">
-        <Link href={`/${branch}`} className="rounded px-1 py-0.5 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
+    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
+      <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 overflow-x-auto text-sm text-zinc-500 sm:mb-6">
+        <Link href={`/${branch}`} className="shrink-0 rounded px-1 py-1 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
           {(branchNode.title as string) || branch}
         </Link>
-        <span aria-hidden className="text-zinc-400">/</span>
-        <Link href={`/${branch}/${year}`} className="rounded px-1 py-0.5 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
+        <span aria-hidden className="shrink-0 text-zinc-400">/</span>
+        <Link href={`/${branch}/${year}`} className="shrink-0 rounded px-1 py-1 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
           {(yearNode.title as string) || year}
         </Link>
-        <span aria-hidden className="text-zinc-400">/</span>
-        <Link href={`/${branch}/${year}/${subject}`} className="rounded px-1 py-0.5 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
+        <span aria-hidden className="shrink-0 text-zinc-400">/</span>
+        <Link href={`/${branch}/${year}/${subject}`} className="shrink-0 rounded px-1 py-1 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
           {(subjectNode.title as string) || subject}
         </Link>
-        <span aria-hidden className="text-zinc-400">/</span>
-        <span aria-current="page" className="font-medium text-zinc-900 dark:text-zinc-100">
+        <span aria-hidden className="shrink-0 text-zinc-400">/</span>
+        <span aria-current="page" className="min-w-0 break-words font-medium text-zinc-900 dark:text-zinc-100">
           {chapterNode.title as string}
         </span>
       </nav>
-      <h1 className="text-3xl font-semibold tracking-tight">{chapterNode.title as string}</h1>
-      <div className="mt-8">
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl break-words">{chapterNode.title as string}</h1>
+      <div className="mt-6 sm:mt-8">
         <PublicBlockRenderer blocks={blocks} />
       </div>
     </main>

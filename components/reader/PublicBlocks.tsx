@@ -56,7 +56,7 @@ function sanitizeHtml(dirty: string): string {
 export function PublicMarkdownBlock({ compiledHtml }: { compiledHtml?: string }) {
   const html = sanitizeHtml(compiledHtml ?? "");
   if (!html.trim()) return <p className="text-sm text-muted-foreground">No content.</p>;
-  return <div className="prose prose-zinc max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div className="prose prose-zinc max-w-none dark:prose-invert prose-p:break-words prose-a:break-words prose-pre:overflow-x-auto prose-pre:max-w-full text-[15px] leading-7 sm:text-base" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 const TINY_BLUR = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
