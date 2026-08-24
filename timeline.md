@@ -135,8 +135,8 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 
 - [x] Generate a lightweight search index (titles, tags, short excerpts) as part of the publish hook
 - [x] Ship the index as a static JSON asset, cached by the service worker
-- [ ] Build the client-side search UI using Fuse.js or FlexSearch
-- [ ] Test: search while offline, confirm results return with no network call
+- [x] Build the client-side search UI using Fuse.js or FlexSearch
+- [x] Test: search while offline, confirm results return with no network call
 
 **Deliverable:** users can search the whole archive instantly, online or offline.
 

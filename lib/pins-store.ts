@@ -48,14 +48,22 @@ export const usePinsStore = create<PinsState>()(
       },
       isPinned: (id) => get().pins.some((p) => p.id === id),
       hydrate: async () => {
-        if (get().hydrated) return;
         try {
           const raw = await getPref("pins");
+          const state = get();
+          const hasLocalPins = state.pins.length > 0;
           if (raw) {
             const parsed = JSON.parse(raw) as PinnedItem[];
-            if (Array.isArray(parsed)) set({ pins: parsed, pinnedIds: parsed.map((p) => p.id), hydrated: true });
-            else set({ hydrated: true });
-          } else set({ hydrated: true });
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              if (!hasLocalPins) set({ pins: parsed, pinnedIds: parsed.map((p) => p.id) });
+              else syncPinsToDexie(state.pins);
+            } else if (!hasLocalPins) {
+              set({ pins: [], pinnedIds: [] });
+            }
+          } else if (hasLocalPins) {
+            syncPinsToDexie(state.pins);
+          }
+          set({ hydrated: true });
         } catch {
           set({ hydrated: true });
         }
@@ -66,11 +74,7 @@ export const usePinsStore = create<PinsState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ pins: s.pins, pinnedIds: s.pinnedIds }),
       onRehydrateStorage: () => (state) => {
-        if (state) {
-          state.hydrated = true;
-          if (!state.pinnedIds?.length && state.pins.length) state.pinnedIds = state.pins.map((p) => p.id);
-          syncPinsToDexie(state.pins);
-        }
+        if (state && !state.pinnedIds?.length && state.pins.length) state.pinnedIds = state.pins.map((p) => p.id);
       },
     },
   ),

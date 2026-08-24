@@ -13,14 +13,18 @@ export function InstallPrompt() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY) || 0);
-    if (dismissedAt && Date.now() - dismissedAt < COOLDOWN_MS) return;
     if (window.matchMedia("(display-mode: standalone)").matches) return;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
 
+    const isInCooldown = () => {
+      const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY) || 0);
+      return Boolean(dismissedAt && Date.now() - dismissedAt < COOLDOWN_MS);
+    };
+
     const onBIP = (e: Event) => {
       e.preventDefault();
+      if (isInCooldown()) return;
       setDeferred(e as BIPEvent);
       timer = setTimeout(() => setVisible(true), DELAY_MS);
     };
@@ -35,7 +39,7 @@ export function InstallPrompt() {
   if (!visible || !deferred) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md rounded-lg border bg-card p-4 shadow-lg sm:left-auto sm:right-4">
+    <div className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-md rounded-lg border bg-card p-4 shadow-lg sm:left-auto sm:right-4">
       <p className="text-sm font-medium">Install Raven</p>
       <p className="mt-1 text-xs text-muted-foreground">Add to your home screen for offline access.</p>
       <div className="mt-3 flex gap-2">

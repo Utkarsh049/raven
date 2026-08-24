@@ -5,6 +5,8 @@ import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { SettingsDrawer } from "@/components/settings/SettingsDrawer";
 import { PinsHydrator } from "@/components/pins/PinsHydrator";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { SearchBox } from "@/components/search/SearchBox";
+import { ThemeScript } from "@/components/settings/ThemeScript";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,13 +34,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body className="min-h-full flex flex-col">
         <SettingsProvider>
           <PinsHydrator />
-          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur sm:px-6">
-            <a href="/" className="text-sm font-semibold tracking-tight">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b bg-background/80 px-4 backdrop-blur sm:px-6">
+            <a href="/" className="shrink-0 text-sm font-semibold tracking-tight">
               Raven
             </a>
+            <div className="flex min-w-0 flex-1 justify-center px-2">
+              <SearchBox />
+            </div>
             <SettingsDrawer />
           </header>
           {children}

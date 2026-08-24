@@ -16,9 +16,9 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
-    ...defaultCache,
     {
-      matcher: ({ url }: { url: URL }) => url.pathname.match(/^\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/) !== null,
+      matcher: ({ url, request }: { url: URL; request: Request }) =>
+        request.method === "GET" && url.pathname.match(/^\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/) !== null,
       handler: new StaleWhileRevalidate({
         cacheName: "raven-chapter-pages",
         plugins: [
@@ -43,6 +43,7 @@ const serwist = new Serwist({
         plugins: [new ExpirationPlugin({ maxEntries: 2, maxAgeSeconds: 7 * 24 * 60 * 60, maxAgeFrom: "last-used" })],
       }),
     },
+    ...defaultCache,
   ],
 });
 
