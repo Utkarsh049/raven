@@ -117,7 +117,7 @@ export function ImageBlock({ url, alt, caption }: { url: string; alt: string; ca
 
   return (
     <figure className="overflow-hidden rounded-lg border">
-      <img src={url} alt={alt || ""} className="w-full object-cover" loading="lazy" />
+      <img src={url} alt={alt || ""} className="w-full object-cover" loading="lazy" decoding="async" />
       {(caption || alt) && <figcaption className="bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{caption || alt}</figcaption>}
     </figure>
   );
@@ -161,7 +161,7 @@ export function YoutubeBlock({ videoId, title }: { videoId: string; title: strin
         className="relative flex aspect-video w-full items-center justify-center bg-zinc-900 text-left"
         aria-label={isValid ? `Play ${title || "video"}` : "Invalid YouTube ID"}
       >
-        {thumb ? <img src={thumb} alt={title} className="h-full w-full object-cover" loading="lazy" /> : <div className="grid h-full place-items-center text-sm text-zinc-400">Invalid YouTube ID</div>}
+        {thumb ? <img src={thumb} alt={title} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid h-full place-items-center text-sm text-zinc-400">Invalid YouTube ID</div>}
         {isValid && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/20">
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900">▶</span>

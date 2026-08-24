@@ -426,13 +426,17 @@ function ImageRow({
           />
         </div>
         <div className="raven-field-group">
-          <label className="raven-field-label">Alt text</label>
+          <label className="raven-field-label">Alt text <span aria-hidden className="text-destructive">*</span></label>
           <input
             value={row.alt ?? ""}
             onChange={(e) => onChange({ alt: e.target.value })}
             placeholder="Describe the image (required)"
             className="raven-input"
+            required
+            aria-required="true"
+            aria-describedby={!row.alt?.trim() ? `alt-hint-${row.id}` : undefined}
           />
+          {!row.alt?.trim() && <span id={`alt-hint-${row.id}`} className="text-xs text-destructive">Alt text is required for accessibility</span>}
         </div>
       </div>
       <div className="raven-field-group">

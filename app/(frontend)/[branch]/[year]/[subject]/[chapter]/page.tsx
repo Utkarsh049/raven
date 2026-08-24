@@ -91,7 +91,7 @@ export default async function ChapterPage({ params }: { params: Promise<Params> 
   const blocks = (chapterNode.blocks ?? []) as ReaderBlock[];
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
+    <main id="main-content" className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
       <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 overflow-x-auto text-sm text-zinc-500 sm:mb-6">
         <Link href={`/${branch}`} className="shrink-0 rounded px-1 py-1 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
           {(branchNode.title as string) || branch}

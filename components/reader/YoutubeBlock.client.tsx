@@ -20,9 +20,10 @@ function extractYoutubeId(input: string) {
 
 export function YoutubeBlock({ videoId, title }: { videoId: string; title: string }) {
   const [playing, setPlaying] = useState(false);
+  const [thumbError, setThumbError] = useState(false);
   const id = extractYoutubeId(videoId);
   const isValid = /^[a-zA-Z0-9_-]{11}$/.test(id);
-  const thumb = isValid ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : "";
+  const thumb = isValid && !thumbError ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : "";
 
   if (playing && isValid) {
     return (
@@ -57,9 +58,9 @@ export function YoutubeBlock({ videoId, title }: { videoId: string; title: strin
         aria-label={isValid ? `Play ${title || "video"}` : "Invalid YouTube ID"}
       >
         {thumb ? (
-          <Image src={thumb} alt={title || "YouTube thumbnail"} fill sizes="(max-width: 768px) 100vw, 672px" className="object-cover" />
+          <Image src={thumb} alt={title || "YouTube thumbnail"} fill sizes="(max-width: 768px) 100vw, 672px" className="object-cover" loading="lazy" onError={() => setThumbError(true)} />
         ) : (
-          <div className="grid h-full place-items-center text-sm text-zinc-400">Invalid YouTube ID</div>
+          <div className="grid h-full place-items-center p-4 text-center text-sm text-zinc-400">{isValid ? "Thumbnail unavailable" : "Invalid YouTube ID"}</div>
         )}
         {isValid && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/20">

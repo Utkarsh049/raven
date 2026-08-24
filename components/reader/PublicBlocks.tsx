@@ -1,3 +1,4 @@
+import * as React from "react";
 import Image from "next/image";
 import { YoutubeBlock } from "./YoutubeBlock.client";
 
@@ -55,8 +56,8 @@ function sanitizeHtml(dirty: string): string {
 
 export function PublicMarkdownBlock({ compiledHtml }: { compiledHtml?: string }) {
   const html = sanitizeHtml(compiledHtml ?? "");
-  if (!html.trim()) return <p className="text-sm text-muted-foreground">No content.</p>;
-  return <div className="prose prose-zinc max-w-none dark:prose-invert prose-p:break-words prose-a:break-words prose-pre:overflow-x-auto prose-pre:max-w-full text-[15px] leading-7 sm:text-base" dangerouslySetInnerHTML={{ __html: html }} />;
+  if (!html.trim()) return null;
+  return <div className="prose prose-zinc max-w-none dark:prose-invert prose-p:break-words prose-a:break-words prose-pre:overflow-x-auto prose-pre:max-w-full text-[15px] leading-7 sm:text-base prose-a:underline-offset-4 prose-a:focus-visible:outline-none prose-a:focus-visible:ring-2 prose-a:focus-visible:ring-ring" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 const TINY_BLUR = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -68,6 +69,18 @@ export function PublicImageBlock({ url, alt, caption, priority }: { url: string;
       <figure className="overflow-hidden rounded-lg border border-dashed border-border p-5 text-center text-xs text-muted-foreground bg-muted/10">
         <p className="font-medium">Image block (no URL set yet)</p>
         {(caption || alt) && <figcaption className="mt-1 text-[11px] text-muted-foreground">{caption || alt}</figcaption>}
+      </figure>
+    );
+  }
+  const [imgError, setImgError] = React.useState(false);
+  if (imgError) {
+    return (
+      <figure className="overflow-hidden rounded-lg border border-dashed bg-muted/10 p-5 text-center">
+        <p className="text-xs text-muted-foreground">Image failed to load</p>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs underline">
+          Open image
+        </a>
+        {alt && <figcaption className="mt-2 text-xs text-muted-foreground">{alt}</figcaption>}
       </figure>
     );
   }
@@ -83,6 +96,7 @@ export function PublicImageBlock({ url, alt, caption, priority }: { url: string;
           priority={Boolean(priority)}
           placeholder="blur"
           blurDataURL={TINY_BLUR}
+          onError={() => setImgError(true)}
         />
       </div>
       {(caption || alt) && <figcaption className="bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{caption || alt}</figcaption>}
@@ -91,11 +105,17 @@ export function PublicImageBlock({ url, alt, caption, priority }: { url: string;
 }
 
 export function PublicBlockRenderer({ blocks }: { blocks: ReaderBlock[] }) {
-  if (!blocks?.length) return <p className="text-sm text-muted-foreground">No content yet.</p>;
-  const firstImageIndex = blocks.findIndex((b) => b.blockType === "image" && Boolean((b as { url?: string }).url?.trim()));
+  const visible = (blocks ?? []).filter((b) => {
+    if (b.blockType === "markdown") return Boolean(String((b as { compiledHtml?: string }).compiledHtml ?? (b as { content?: string }).content ?? "").trim());
+    if (b.blockType === "image") return Boolean(String((b as { url?: string }).url ?? "").trim());
+    if (b.blockType === "youtube") return Boolean(String((b as { videoId?: string }).videoId ?? "").trim());
+    return true;
+  });
+  if (!visible.length) return <p className="text-sm text-muted-foreground">No content yet.</p>;
+  const firstImageIndex = visible.findIndex((b) => b.blockType === "image" && Boolean((b as { url?: string }).url?.trim()));
   return (
     <div className="space-y-6">
-      {blocks.map((b, i) => (
+      {visible.map((b, i) => (
         <div key={(b as { id?: string }).id ?? `${b.blockType}-${i}`}>
           {b.blockType === "markdown" && <PublicMarkdownBlock compiledHtml={(b as { compiledHtml?: string }).compiledHtml} />}
           {b.blockType === "image" && <PublicImageBlock url={(b as { url: string }).url} alt={(b as { alt: string }).alt} caption={(b as { caption?: string }).caption} priority={i === firstImageIndex} />}

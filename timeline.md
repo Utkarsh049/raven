@@ -161,9 +161,9 @@ Two complementary AI surfaces — pick either or both:
 - [x] Tools: `create_node`/`publish_node`/`list_nodes`/`search_nodes` (covers `create_branch|subject|chapter`) — e.g. "create chapter Photosynthesis under science/1st/biology" from ChatGPT creates the Payload Node end-to-end — via `/api/mcp`
 - [x] Shared core: both 12A and 12B reuse the same chapter-creation + publish/revalidate hooks (`lib/raven-api.ts`, `Nodes` hooks)
 
-- [ ] Accessibility pass: color contrast in both themes, enforce alt text on image blocks
-- [ ] Performance pass: Lighthouse audit, confirm no unexpected layout shift or slow paints
-- [ ] Handle edge cases: empty taxonomy levels, broken image links, missing/invalid YouTube IDs
+- [x] Accessibility pass: color contrast in both themes, enforce alt text on image blocks
+- [x] Performance pass: Lighthouse audit, confirm no unexpected layout shift or slow paints
+- [x] Handle edge cases: empty taxonomy levels, broken image links, missing/invalid YouTube IDs
 
 **Deliverable:** Raven feels finished — fast, accessible, resilient to incomplete content, and AI-controllable from inside (API key) or outside (ChatGPT/Claude/Gemini via MCP).
 
