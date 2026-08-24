@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 function extractYoutubeId(input: string) {
@@ -55,7 +56,11 @@ export function YoutubeBlock({ videoId, title }: { videoId: string; title: strin
         className="relative flex aspect-video w-full items-center justify-center bg-zinc-900 text-left"
         aria-label={isValid ? `Play ${title || "video"}` : "Invalid YouTube ID"}
       >
-        {thumb ? <img src={thumb} alt={title} className="h-full w-full object-cover" loading="lazy" /> : <div className="grid h-full place-items-center text-sm text-zinc-400">Invalid YouTube ID</div>}
+        {thumb ? (
+          <Image src={thumb} alt={title || "YouTube thumbnail"} fill sizes="(max-width: 768px) 100vw, 672px" className="object-cover" />
+        ) : (
+          <div className="grid h-full place-items-center text-sm text-zinc-400">Invalid YouTube ID</div>
+        )}
         {isValid && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/20">
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900">▶</span>
