@@ -108,7 +108,7 @@ A dependency-ordered, phased build plan — durations assume a **solo developer 
 ## Phase 9 — Pinning & offline preferences
 **Estimated time: 4–6 days**
 
-- [ ] Add pin/unpin controls on subject and chapter pages
+- [x] Add pin/unpin controls on subject and chapter pages
 - [ ] Extend the Dexie/Zustand store to hold an ordered `pinnedIds` list
 - [ ] Build the homepage to render pinned items for quick access
 - [ ] Test: pin several items, fully close the app, reopen with no network, confirm pins are intact
