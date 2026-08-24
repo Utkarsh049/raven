@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getPayload } from "payload";
 import { notFound } from "next/navigation";
 import { PublicBlockRenderer, type ReaderBlock } from "@/components/reader/PublicBlocks";
+import { PinButton } from "@/components/pins/PinButton";
 
 type Params = { branch: string; year: string; subject: string; chapter: string };
 
@@ -108,7 +109,10 @@ export default async function ChapterPage({ params }: { params: Promise<Params> 
           {chapterNode.title as string}
         </span>
       </nav>
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl break-words">{chapterNode.title as string}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight sm:text-3xl break-words">{chapterNode.title as string}</h1>
+        <PinButton id={String(chapterNode.id)} href={`/${branch}/${year}/${subject}/${chapter}`} title={String(chapterNode.title)} kind="chapter" />
+      </div>
       <div className="mt-6 sm:mt-8">
         <PublicBlockRenderer blocks={blocks} />
       </div>
