@@ -10,8 +10,9 @@ export type SearchDoc = {
 };
 
 function parentIdOf(v: unknown): string | null {
-  if (!v) return null;
-  if (typeof v === "string") return v;
+  if (v == null) return null;
+  if (typeof v === "string") return v || null;
+  if (typeof v === "number") return String(v);
   if (typeof v === "object" && v !== null && "id" in (v as Record<string, unknown>)) {
     const id = (v as { id?: unknown }).id;
     return typeof id === "string" || typeof id === "number" ? String(id) : null;
@@ -44,7 +45,7 @@ export async function buildSearchIndex(payload: Payload): Promise<SearchDoc[]> {
     collection: "nodes",
     pagination: false,
     depth: 0,
-    overrideAccess: false,
+    overrideAccess: true,
     select: { title: true, slug: true, type: true, status: true, parent: true, blocks: true },
   } as never);
 
@@ -65,8 +66,26 @@ export async function buildSearchIndex(payload: Payload): Promise<SearchDoc[]> {
   for (const d of docs) {
     if (d.status !== "published") continue;
     if (d.type !== "chapter" && d.type !== "subject" && d.type !== "topic") continue;
+    // Ensure subjects are directly linkable at /{branch}/{year}/{subject}
     let href: string | null = null;
-    if (d.type === "chapter" || d.type === "topic") {
+    if (d.type === "subject") {
+      const chain: Array<{ slug: string; type: string; parent: unknown; id: string }> = [];
+      let curId: string | null = String(d.id);
+      const seen = new Set<string>();
+      for (let i = 0; i < 12 && curId; i++) {
+        if (seen.has(curId)) break;
+        seen.add(curId);
+        const node = byId.get(curId);
+        if (!node) break;
+        chain.unshift({ id: curId, slug: node.slug, type: node.type, parent: node.parent });
+        curId = parentIdOf(node.parent);
+      }
+      const m = new Map(chain.map((n) => [n.type, n.slug] as const));
+      const b = m.get("branch");
+      const y = m.get("year");
+      const s = m.get("subject");
+      if (b && y && s) href = `/${b}/${y}/${s}`;
+    } else if (d.type === "chapter" || d.type === "topic") {
       const chain: Array<{ slug: string; type: string; parent: unknown; id: string }> = [];
       let curId: string | null = String(d.id);
       const seen = new Set<string>();
