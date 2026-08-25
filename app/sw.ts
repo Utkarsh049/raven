@@ -1,6 +1,6 @@
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { ExpirationPlugin, Serwist, StaleWhileRevalidate } from "serwist";
+import { CacheFirst, ExpirationPlugin, Serwist, StaleWhileRevalidate } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -16,6 +16,20 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
+    {
+      // Cache app icons, logo, and webmanifest with CacheFirst for instant loads
+      matcher: ({ url }: { url: URL }) =>
+        url.pathname.endsWith(".png") ||
+        url.pathname.endsWith(".ico") ||
+        url.pathname.endsWith(".svg") ||
+        url.pathname.endsWith(".webmanifest"),
+      handler: new CacheFirst({
+        cacheName: "raven-static-icons",
+        plugins: [
+          new ExpirationPlugin({ maxEntries: 64, maxAgeSeconds: 365 * 24 * 60 * 60, maxAgeFrom: "last-used" }),
+        ],
+      }),
+    },
     {
       // Cache user-facing pages and Next.js RSC data requests
       matcher: ({ url, request }: { url: URL; request: Request }) => {
