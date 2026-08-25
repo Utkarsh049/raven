@@ -43,9 +43,10 @@ function excerptFromBlocks(blocks: unknown): string {
 export async function buildSearchIndex(payload: Payload): Promise<SearchDoc[]> {
   const res = await payload.find({
     collection: "nodes",
+    where: { status: { equals: "published" } },
     pagination: false,
     depth: 0,
-    overrideAccess: true,
+    overrideAccess: false,
     select: { title: true, slug: true, type: true, status: true, parent: true, blocks: true },
   } as never);
 

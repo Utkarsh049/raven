@@ -205,17 +205,27 @@
   border-bottom: 1px solid var(--theme-elevation-200, #333338);
 }
 
+.raven-reorder-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .raven-drag-btn {
   background: none;
   border: none;
   color: var(--theme-elevation-400, #71717a);
   cursor: grab;
-  padding: 0.25rem;
+  padding: 0.35rem 0.4rem;
   font-size: 0.875rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 6px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: all 0.15s ease;
 }
 
 .raven-drag-btn:hover {
@@ -225,6 +235,40 @@
 
 .raven-drag-btn:active {
   cursor: grabbing;
+}
+
+.raven-move-arrows {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.raven-move-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 0.625rem;
+  color: var(--theme-elevation-500, #a1a1aa);
+  background-color: var(--theme-elevation-100, #202024);
+  border: 1px solid var(--theme-elevation-250, #3f3f46);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.raven-move-btn:hover:not(:disabled) {
+  background-color: var(--theme-elevation-200, #3f3f46);
+  color: var(--theme-text, #fafafa);
+  border-color: var(--theme-elevation-400, #71717a);
+}
+
+.raven-move-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .raven-block-body {

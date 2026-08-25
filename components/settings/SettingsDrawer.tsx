@@ -40,13 +40,16 @@ export function SettingsDrawer() {
     return () => { document.body.style.overflow = prev; };
   }, [mounted]);
 
+  const NO_PREF = "__NO_PREFERENCE__";
+
   // Eagerly load branches from IndexedDB cache on mount and fetch fresh list in background
   useEffect(() => {
     let cancelled = false;
+    let fetchedFresh = false;
 
     // 1. Instant hydration from IndexedDB
     getBranchesCache().then((cached) => {
-      if (!cancelled && cached && cached.length > 0) {
+      if (!cancelled && !fetchedFresh && cached && cached.length > 0) {
         setBranches(cached);
       }
     });
@@ -55,14 +58,15 @@ export function SettingsDrawer() {
     fetch("/api/nodes?where[type][equals]=branch&where[status][equals]=published&limit=100&depth=0")
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
-        if (cancelled || !json?.docs) return;
-        const docs = (json.docs as Array<{ slug: string; title: string }>)
-          .map((d) => ({ slug: d.slug, title: d.title }))
-          .filter((b) => Boolean(b.slug && b.title));
-        if (docs.length > 0) {
-          setBranches(docs);
-          setBranchesCache(docs);
-        }
+        if (cancelled || !json) return;
+        fetchedFresh = true;
+        const docs = Array.isArray(json.docs)
+          ? (json.docs as Array<{ slug: string; title: string }>)
+              .map((d) => ({ slug: d.slug, title: d.title }))
+              .filter((b) => Boolean(b.slug && b.title))
+          : [];
+        setBranches(docs);
+        setBranchesCache(docs);
       })
       .catch(() => {});
 
@@ -126,14 +130,14 @@ export function SettingsDrawer() {
                     Preferred branch
                   </label>
                   <Select
-                    value={branchSlug ?? "none"}
-                    onValueChange={(val) => setBranchSlug(val === "none" ? null : val)}
+                    value={branchSlug ?? NO_PREF}
+                    onValueChange={(val) => setBranchSlug(val === NO_PREF ? null : val)}
                   >
                     <SelectTrigger id="branch-select" className="w-full bg-background">
                       <SelectValue placeholder="Select a branch" />
                     </SelectTrigger>
                     <SelectContent className="z-[70]" position="popper">
-                      <SelectItem value="none">— No preference —</SelectItem>
+                      <SelectItem value={NO_PREF}>— No preference —</SelectItem>
                       {branches.map((b) => (
                         <SelectItem key={b.slug} value={b.slug}>
                           {b.title} ({b.slug})

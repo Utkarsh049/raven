@@ -37,5 +37,6 @@ async function main() {
     console.log(" map", Object.fromEntries(m), "find chapter", chain.find((n)=>n.type==="chapter")?.slug);
     console.log(" check", m.get("branch"), m.get("year"), m.get("subject"), chain.find((n)=>n.type==="chapter")?.slug);
   }
+  process.exit(0);
 }
 main().catch(e=>{console.error(e);process.exit(1)});

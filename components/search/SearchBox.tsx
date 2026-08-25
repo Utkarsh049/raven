@@ -10,6 +10,7 @@ const TYPE_RANK: Record<string, number> = { subject: 0, chapter: 1, topic: 1 };
 
 function typeBadge(type: string) {
   const t = String(type).toLowerCase();
+  if (t === "admin") return "Admin";
   if (t === "subject") return "Subject";
   if (t === "chapter") return "Chapter";
   if (t === "topic") return "Topic";
@@ -34,13 +35,26 @@ export function SearchBox() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      let json: SearchDoc[] = [];
       try {
-        let res = await fetch("/api/search-index");
-        if (!res.ok) res = await fetch("/search-index.json");
-        if (!res.ok) return;
-        const json = (await res.json()) as SearchDoc[];
-        if (!cancelled) setDocs(Array.isArray(json) ? json : []);
+        const res = await fetch("/api/search-index").catch(() => null);
+        if (res && res.ok) {
+          json = (await res.json()) as SearchDoc[];
+        }
       } catch {}
+
+      if (!Array.isArray(json) || json.length === 0) {
+        try {
+          const fallbackRes = await fetch("/search-index.json").catch(() => null);
+          if (fallbackRes && fallbackRes.ok) {
+            json = (await fallbackRes.json()) as SearchDoc[];
+          }
+        } catch {}
+      }
+
+      if (!cancelled && Array.isArray(json) && json.length > 0) {
+        setDocs(json);
+      }
     };
     load();
     return () => {
@@ -67,13 +81,30 @@ export function SearchBox() {
   const results = useMemo(() => {
     const q = query.trim();
     if (!q || q.length < 1) return [];
-    const raw = fuse.search(q).slice(0, 12);
+
+    // Secret admin code word "vk18" (case-insensitive, handles any spacing or punctuation like VK18, vk 18, vk-18, Vk_18)
+    const clean = q.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (clean === "vk18") {
+      return [
+        {
+          id: "secret-admin-access",
+          title: "Admin Dashboard",
+          slug: "admin",
+          type: "admin" as unknown as SearchDoc["type"],
+          href: "/admin",
+          excerpt: "Open Raven Control Panel & Content Management System",
+        },
+      ];
+    }
+
+    const raw = fuse.search(q);
     return raw
       .map((r) => ({ item: r.item, score: r.score ?? 1, typeRank: TYPE_RANK[r.item.type] ?? 2 }))
       .sort((a, b) => {
         if (a.typeRank !== b.typeRank) return a.typeRank - b.typeRank;
         return a.score - b.score;
       })
+      .slice(0, 12)
       .map((r) => r.item);
   }, [fuse, query]);
 
@@ -119,8 +150,8 @@ export function SearchBox() {
       }
 
       if (e.key === "Enter") {
-        if (activeIndex >= 0 && activeIndex < results.length) {
-          const selected = results[activeIndex];
+        if (results.length > 0) {
+          const selected = activeIndex >= 0 && activeIndex < results.length ? results[activeIndex] : results[0];
           if (selected?.href) {
             e.preventDefault();
             setOpen(false);

@@ -5,7 +5,8 @@ import {
   DndContext,
   closestCenter,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -38,11 +39,19 @@ function RowShell({
   blockType,
   children,
   onRemove,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
 }: {
   id: string;
   blockType: string;
   children: React.ReactNode;
   onRemove: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style: React.CSSProperties = {
@@ -63,22 +72,65 @@ function RowShell({
   return (
     <div ref={setNodeRef} style={style} className="raven-block-card">
       <div className="raven-block-header">
-        <button
-          type="button"
-          aria-label="Drag to reorder"
-          className="raven-drag-btn"
-          {...attributes}
-          {...listeners}
-        >
-          ⋮⋮
-        </button>
+        <div className="raven-reorder-controls">
+          <button
+            type="button"
+            aria-label="Drag to reorder"
+            title="Press and hold to drag"
+            className="raven-drag-btn"
+            {...attributes}
+            {...listeners}
+          >
+            ⋮⋮
+          </button>
+          <div className="raven-move-arrows">
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMoveUp();
+              }}
+              disabled={isFirst}
+              className="raven-move-btn"
+              aria-label="Move block up"
+              title="Move block up"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMoveDown();
+              }}
+              disabled={isLast}
+              className="raven-move-btn"
+              aria-label="Move block down"
+              title="Move block down"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
         <span className={`raven-badge ${badgeClass}`}>{blockType}</span>
         <span className="raven-meta" style={{ flex: 1, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {id.slice(0, 8)}
         </span>
         <button
           type="button"
-          onClick={onRemove}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRemove();
+          }}
           className="raven-btn raven-btn-danger raven-btn-sm"
         >
           Remove
@@ -92,10 +144,26 @@ function RowShell({
 export function ChapterBlocksField(props: { path: string }) {
   const { path } = props;
   const field = useField<BlockRow[]>({ path });
-  const value: BlockRow[] = useMemo(() => (Array.isArray(field.value) ? (field.value as BlockRow[]) : []), [field.value]);
+  const value: BlockRow[] = useMemo(() => {
+    if (!Array.isArray(field.value)) return [];
+    return (field.value as BlockRow[]).map((r, i) => ({
+      ...r,
+      id: r.id || `blk-${i}-${r.blockType || "markdown"}`,
+    }));
+  }, [field.value]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -135,6 +203,18 @@ export function ChapterBlocksField(props: { path: string }) {
     [setValue, value],
   );
 
+  const moveBlock = useCallback(
+    (index: number, direction: "up" | "down") => {
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= value.length) return;
+      const next = [...value];
+      const [moved] = next.splice(index, 1);
+      next.splice(targetIndex, 0, moved);
+      setValue(next);
+    },
+    [setValue, value],
+  );
+
   const ids = useMemo(() => value.map((r, i) => r.id ?? `row-${i}-${r.blockType}`), [value]);
 
   const handleDragEnd = useCallback(
@@ -157,7 +237,7 @@ export function ChapterBlocksField(props: { path: string }) {
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>Blocks</span>
-          <span className="raven-subtitle" style={{ fontSize: "0.75rem" }}>drag ⋮⋮ to reorder</span>
+          <span className="raven-subtitle" style={{ fontSize: "0.75rem" }}>hold ⋮⋮ to drag or tap ▲▼</span>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
           <button
@@ -196,7 +276,16 @@ export function ChapterBlocksField(props: { path: string }) {
               {value.map((row, index) => {
                 const rowId = ids[index];
                 return (
-                  <RowShell key={rowId} id={rowId} blockType={row.blockType} onRemove={() => removeAt(index)}>
+                  <RowShell
+                    key={rowId}
+                    id={rowId}
+                    blockType={row.blockType}
+                    onRemove={() => removeAt(index)}
+                    onMoveUp={() => moveBlock(index, "up")}
+                    onMoveDown={() => moveBlock(index, "down")}
+                    isFirst={index === 0}
+                    isLast={index === value.length - 1}
+                  >
                     {row.blockType === "markdown" && (
                       <MarkdownRow row={row} onChange={(patch) => updateAt(index, patch)} />
                     )}

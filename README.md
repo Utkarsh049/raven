@@ -65,7 +65,7 @@ The platform provides a dual-interface architecture:
 
 - Node.js 20.x or higher (or Bun 1.1+)
 - PostgreSQL database instance (e.g., Supabase)
-- S3-compatible cloud storage bucket for media assets
+- Supabase project with Storage enabled for media assets
 
 ### Installation
 
@@ -86,8 +86,8 @@ The platform provides a dual-interface architecture:
    ```env
    # Database & Supabase
    DATABASE_URL=postgresql://<user>:<password>@<host>:5432/postgres
-   SUPABASE_URL=https://<project-ref>.supabase.co
-   SUPABASE_ANON_KEY=<anon-key>
+   NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-or-anon-key>
    SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 
    # Payload CMS
@@ -104,7 +104,7 @@ The platform provides a dual-interface architecture:
 4. Apply database schema migrations:
    ```bash
    bun run payload:migrate
-   # or: npm run payload:migrate
+   # or: npm run payload:migrate (or: bun run payload migrate)
    ```
 
 5. Start the development server:
