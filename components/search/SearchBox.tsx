@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Fuse from "fuse.js";
 import type { SearchDoc } from "@/lib/search";
 
@@ -19,6 +19,7 @@ export function SearchBox() {
   const [query, setQuery] = useState("");
   const [docs, setDocs] = useState<SearchDoc[]>([]);
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,6 +35,25 @@ export function SearchBox() {
     load();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, []);
 
@@ -67,7 +87,7 @@ export function SearchBox() {
   }, [fuse, query]);
 
   return (
-    <div className="relative w-full">
+    <div ref={containerRef} className="relative w-full min-w-0">
       <input
         value={query}
         onChange={(e) => {
@@ -75,70 +95,55 @@ export function SearchBox() {
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 180)}
         placeholder="Search…"
         aria-label="Search"
-        className="h-9 sm:h-9 w-full rounded-full border bg-muted/40 px-3.5 sm:px-3 text-sm focus:bg-background"
+        className="h-9 w-full rounded-full border bg-muted/50 px-3.5 text-sm transition-colors focus:bg-background focus:ring-2 focus:ring-ring focus:outline-none"
       />
-      {/* Desktop: anchored dropdown */}
+
+      {/* Responsive search results dropdown: full-width with horizontal margins on mobile, anchored on desktop */}
       {open && results.length > 0 && (
-        <ul className="hidden sm:block absolute left-0 right-0 z-40 mt-2 max-h-[420px] overflow-auto rounded-xl border bg-popover p-2 shadow-xl">
-          {results.map((r) => (
-            <li key={r.id}>
-              <Link
-                href={r.href ?? "#"}
-                className="flex items-start justify-between gap-3 rounded-lg px-3 py-2.5 hover:bg-accent"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setOpen(false)}
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium">{r.title}</span>
-                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      {typeBadge(r.type)}
-                    </span>
-                  </span>
-                  <span className="mt-1 block line-clamp-2 text-xs leading-relaxed text-muted-foreground">{r.excerpt.slice(0, 140)}</span>
-                  {r.href && <span className="mt-1 block truncate text-[11px] text-muted-foreground/60">{r.href}</span>}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-      {/* Mobile: full-width sheet */}
-      {open && results.length > 0 && (
-        <div className="sm:hidden fixed inset-x-0 top-[48px] z-40 max-h-[58dvh] overflow-auto border-y bg-background p-2 shadow-lg">
-          <ul className="grid gap-1">
+        <div className="fixed left-3 right-3 top-[52px] z-50 max-h-[65dvh] overflow-y-auto overflow-x-hidden rounded-2xl border bg-popover/95 p-2 shadow-2xl backdrop-blur-md sm:absolute sm:left-0 sm:right-0 sm:top-full sm:mt-2 sm:max-h-[420px] sm:rounded-xl sm:p-1.5">
+          <ul className="grid w-full min-w-0 gap-1">
             {results.map((r) => (
-              <li key={r.id}>
+              <li key={r.id} className="w-full min-w-0">
                 <Link
                   href={r.href ?? "#"}
-                  className="flex min-h-[64px] items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 active:bg-accent"
-                  onMouseDown={(e) => e.preventDefault()}
+                  className="flex w-full min-w-0 items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 hover:bg-accent active:bg-accent transition-colors"
                   onClick={() => setOpen(false)}
                 >
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <span className="truncate text-[15px] font-semibold">{r.title}</span>
-                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="flex min-w-0 items-center justify-between gap-2">
+                      <span className="truncate text-sm font-semibold text-foreground min-w-0 flex-1">
+                        {r.title}
+                      </span>
+                      <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         {typeBadge(r.type)}
                       </span>
-                    </span>
-                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">{r.excerpt.slice(0, 90)}</span>
+                    </div>
+                    {r.excerpt && (
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground min-w-0">
+                        {r.excerpt.slice(0, 100)}
+                      </p>
+                    )}
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground ml-1" aria-hidden>
+                    →
                   </span>
-                  <span className="shrink-0 text-muted-foreground">→</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
       )}
+
       {open && query.trim().length >= 1 && results.length === 0 && docs.length > 0 && (
-        <div className="absolute left-0 right-0 z-40 mt-2 rounded-xl border bg-popover px-3 py-3 text-sm text-muted-foreground shadow-lg sm:shadow-xl">
-          No results.
+        <div className="fixed left-3 right-3 top-[52px] z-50 rounded-2xl border bg-popover/95 px-4 py-3 text-sm text-muted-foreground shadow-2xl backdrop-blur-md sm:absolute sm:left-0 sm:right-0 sm:top-full sm:mt-2 sm:rounded-xl">
+          No results found.
         </div>
       )}
     </div>
   );
 }
+
+
+

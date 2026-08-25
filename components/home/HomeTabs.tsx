@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PinnedList } from "@/components/pins/PinnedList";
+import { Grid, GridCard } from "@/components/GridCard";
 
 type YearItem = { slug: string; title: string; href: string; subjects: Array<{ slug: string; title: string; href: string }> };
 
@@ -41,19 +42,12 @@ export function HomeTabs({ years }: { years: YearItem[] }) {
                     <span className="text-muted-foreground">→</span>
                   </Link>
                   {y.subjects.length > 0 ? (
-                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {y.subjects.map((s) => (
-                        <Link
-                          key={s.href}
-                          href={s.href}
-                          className="group flex min-h-[88px] sm:min-h-[110px] flex-col justify-between rounded-xl border bg-background p-4 sm:p-5 shadow-sm transition-colors hover:bg-accent hover:border-accent-foreground/10 active:scale-[0.99]"
-                        >
-                          <span className="text-sm sm:text-[15px] font-semibold leading-tight line-clamp-2">{s.title}</span>
-                          <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">
-                            Open <span aria-hidden>→</span>
-                          </span>
-                        </Link>
-                      ))}
+                    <div className="mt-4">
+                      <Grid>
+                        {y.subjects.map((s) => (
+                          <GridCard key={s.href} href={s.href} title={s.title} />
+                        ))}
+                      </Grid>
                     </div>
                   ) : (
                     <p className="mt-2 text-sm text-muted-foreground">No subjects</p>

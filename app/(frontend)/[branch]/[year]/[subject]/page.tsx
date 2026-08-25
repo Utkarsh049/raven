@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { notFound } from "next/navigation";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { Grid, GridCard } from "@/components/GridCard";
 
 export const dynamicParams = true;
 
@@ -24,26 +25,30 @@ export default async function SubjectPage({ params }: { params: Promise<{ branch
     href: `/${branch}/${year}/${subject}/${c.slug}`,
   }));
   return (
-    <main id="main-content" className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-      <nav className="mb-4 flex flex-wrap gap-1 text-sm text-muted-foreground">
-        <Link href={`/${branch}`} className="hover:underline">{String(b.title)}</Link>
-        <span>/</span>
-        <Link href={`/${branch}/${year}`} className="hover:underline">{String(y.title)}</Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">{String(s.title)}</span>
-      </nav>
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{String(s.title)}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Chapters</p>
-      {withHref.length === 0 ? <p className="mt-6 text-sm text-muted-foreground">No chapters yet.</p> : (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 sm:gap-4">
-          {withHref.map((c) => (
-            <Link key={c.href} href={c.href} className="group flex aspect-square flex-col justify-between rounded-2xl border bg-card p-4 sm:p-5 shadow-sm transition-colors hover:bg-accent hover:border-accent-foreground/10 active:scale-[0.98]">
-              <span className="text-sm sm:text-[15px] font-semibold leading-tight line-clamp-3">{c.title}</span>
-              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">Read <span aria-hidden>→</span></span>
-            </Link>
-          ))}
+    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <Breadcrumb
+        items={[
+          { label: String(b.title), href: `/${branch}` },
+          { label: String(y.title), href: `/${branch}/${year}` },
+          { label: String(s.title) },
+        ]}
+      />
+      <div className="mt-3 sm:mt-4">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{String(s.title)}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Chapters</p>
+      </div>
+      {withHref.length === 0 ? (
+        <p className="mt-6 text-sm text-muted-foreground">No chapters yet.</p>
+      ) : (
+        <div className="mt-6">
+          <Grid>
+            {withHref.map((c) => (
+              <GridCard key={c.href} href={c.href} title={c.title} actionLabel="Read" />
+            ))}
+          </Grid>
         </div>
       )}
     </main>
   );
 }
+

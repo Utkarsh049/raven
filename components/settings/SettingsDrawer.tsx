@@ -2,8 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useSettingsStore, type Theme } from "@/lib/settings-store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type BranchOption = { slug: string; title: string };
+
 
 export function SettingsDrawer() {
   const [open, setOpen] = useState(false);
@@ -111,19 +119,22 @@ export function SettingsDrawer() {
                     <label htmlFor="branch-select" className="text-xs font-medium">
                       Preferred branch
                     </label>
-                    <select
-                      id="branch-select"
-                      value={branchSlug ?? ""}
-                      onChange={(e) => setBranchSlug(e.target.value || null)}
-                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                    <Select
+                      value={branchSlug ?? "none"}
+                      onValueChange={(val) => setBranchSlug(val === "none" ? null : val)}
                     >
-                      <option value="">— No preference —</option>
-                      {branches.map((b) => (
-                        <option key={b.slug} value={b.slug}>
-                          {b.title} ({b.slug})
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="branch-select" className="w-full bg-background">
+                        <SelectValue placeholder="Select a branch" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[70]" position="popper">
+                        <SelectItem value="none">— No preference —</SelectItem>
+                        {branches.map((b) => (
+                          <SelectItem key={b.slug} value={b.slug}>
+                            {b.title} ({b.slug})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     {branchSlug ? (
                       <a href={`/${branchSlug}`} className="text-xs text-primary underline">
                         Go to {branchSlug}

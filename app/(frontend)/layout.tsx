@@ -47,13 +47,13 @@ export default function RootLayout({
         </a>
         <SettingsProvider>
           <PinsHydrator />
-          <header className="sticky top-0 z-40 flex h-12 sm:h-14 items-center justify-between gap-2 sm:gap-3 border-b bg-background/80 px-3 sm:px-4 backdrop-blur sm:px-6">
-            <a href="/" className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <header className="sticky top-0 z-40 flex h-12 sm:h-14 items-center justify-between gap-2 sm:gap-4 border-b bg-background/80 px-4 sm:px-6 lg:px-8 backdrop-blur">
+            <a href="/" className="flex shrink-0 items-center gap-2">
               <img src="/icon-512.png" alt="Raven" width={28} height={28} className="h-6 w-6 sm:h-7 sm:w-7 rounded-md object-contain" />
               <span className="hidden sm:inline text-sm font-semibold tracking-tight">Raven</span>
             </a>
-            <div className="flex min-w-0 flex-1 justify-center px-1 sm:px-2">
-              <div className="w-full max-w-[180px] sm:max-w-md">
+            <div className="flex min-w-0 flex-1 justify-center px-2">
+              <div className="w-full max-w-xs sm:max-w-md">
                 <SearchBox />
               </div>
             </div>
