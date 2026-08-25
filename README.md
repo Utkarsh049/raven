@@ -1,124 +1,139 @@
 # Raven
 
-Raven is an installable, offline-capable notes platform organized as **Branch → Year → Subject → Chapter → Topic**. Content is managed entirely through a drag-and-drop admin "playground" — a taxonomy tree for structure, and a three-block chapter editor (markdown, image, YouTube) for content — while readers get an instant, app-like browsing experience with personal pinning and offline access.
+Raven is an enterprise-grade, offline-first curriculum and notes publishing platform. It structures educational content hierarchically across **Branch → Year → Subject → Chapter → Topic** with instant search, progressive web app (PWA) offline capabilities, and a headless content management system.
 
-> See `prd.md` for full product requirements, `architecture.md` for technical design, and `timeline.md` for the phased build plan.
+The platform provides a dual-interface architecture:
+1. **Reader Interface:** High-performance, statically generated, and cached reader views with local pinning, offline reading, responsive navigation, and instantaneous client-side search.
+2. **Editorial Control Plane:** A visual administration suite powered by Payload CMS featuring drag-and-drop taxonomy reorganization, block-based rich text composition, live side-by-side rendering, and AI-assisted drafting.
 
-## Features
+---
 
-- 📚 **Drag-and-drop taxonomy**: Branch → Year → Subject → Chapter → Topic, restructured by dragging nodes in a tree, no manual data entry
-- 🧱 **Three-block chapter editor**: markdown/text, image, and YouTube blocks, reordered by drag-and-drop
-- 👀 **Live split-view preview**: admin edits on one side, sees the exact published result on the other
-- 🤖 **AI-assisted drafting**: "Generate with AI" on the markdown block, always admin-reviewed before saving
-- ⚡ **Instant page loads**: static generation + on-demand revalidation — publishing reflects on the live site in seconds, no rebuild wait
-- 📱 **Installable PWA** with offline access to previously viewed chapters
-- 📌 **Pin subjects/chapters** to the homepage — pins, branch, and theme all persist offline (IndexedDB)
-- 🌗 **Branch and light/dark theme toggle** from a settings drawer
-- 🔍 **Client-side, offline-capable search**
-- 💸 Runs entirely on **free-tier infrastructure** — no credit card required anywhere in the stack
+## Architectural Highlights
 
-## Tech stack
+- **Hierarchical Taxonomy Engine:** Complete structural control over branches, academic years, subjects, chapters, and topics through an interactive tree interface.
+- **Modular Block Editor:** Structured chapter authoring supporting markdown typography, optimized cloud-hosted images, and embedded video blocks with drag-and-drop reordering.
+- **Real-Time Split Preview:** Side-by-side authoring interface delivering accurate live previews matching public reader typography and layouts.
+- **Incremental Static Regeneration (ISR):** Content changes published in the administration panel invalidate caches on demand within seconds without requiring full site rebuilds.
+- **Offline-First Progressive Web App (PWA):** Service worker architecture leveraging Serwist and Stale-While-Revalidate caching strategies for zero-latency page transitions and offline reading.
+- **Client-Side Storage & State Synchronization:** Local state, theme settings, branch preferences, and pinned content persisted locally via Dexie.js (IndexedDB) and Zustand.
+- **Decoupled Search Infrastructure:** Fast, client-side indexing and fuzzy search with Fuse.js, operating entirely offline once cached.
 
-- **Framework:** Next.js 15 (App Router), TypeScript
-- **CMS:** Payload CMS 3.0 (embedded in the same app)
-- **Database & storage:** Supabase (Postgres + Storage), free tier
-- **PWA:** Serwist
-- **Admin UI:** react-arborist (taxonomy tree), dnd-kit (block reordering), Tiptap (markdown editing)
-- **Client state/offline:** Zustand + Dexie.js (IndexedDB)
-- **Search:** Fuse.js / FlexSearch (client-side)
-- **Styling:** Tailwind CSS + shadcn/ui
-- **Hosting:** Vercel (Hobby tier)
+---
 
-## Getting started
+## Technology Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Framework** | Next.js 15 (App Router, Turbopack), React 19, TypeScript |
+| **Content Management** | Payload CMS 3.0 (Embedded) |
+| **Database & Storage** | PostgreSQL via Supabase (Database, Auth, Storage) |
+| **Service Worker & PWA** | Serwist (`@serwist/next`) |
+| **Client Storage** | IndexedDB via Dexie.js, Zustand |
+| **Editor & UI Components** | Tiptap, Radix UI / shadcn/ui, dnd-kit, Tailwind CSS |
+| **Search Engine** | Fuse.js (Client-side vector/fuzzy search index) |
+
+---
+
+## Project Structure
+
+```
+├── app/
+│   ├── (frontend)/          # Reader interface, routes, layouts, and views
+│   ├── (payload)/           # Payload CMS admin interface and endpoints
+│   ├── api/                 # Internal REST endpoints and search index generators
+│   ├── globals.css          # Global CSS, theme definitions, and base layers
+│   ├── manifest.ts          # Web App Manifest definition
+│   └── sw.ts                # Serwist service worker runtime caching rules
+├── collections/             # Payload CMS collection definitions (Nodes, Users)
+├── components/
+│   ├── admin/               # Administrative views, taxonomy managers, and split editor
+│   ├── pins/                # Offline bookmarking and pinning components
+│   ├── pwa/                 # PWA lifecycle, install prompts, and service worker registration
+│   ├── reader/              # Public-facing block renderers and markdown parsing
+│   ├── search/              # Client-side search interface and modal
+│   ├── settings/            # Theme and preference drawers
+│   └── ui/                  # Reusable UI component primitives
+├── lib/                     # Database utilities, indexing logic, and state stores
+└── public/                  # Static assets, branding icons, and service worker output
+```
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 20+
-- A free [Supabase](https://supabase.com) project (Postgres + Storage enabled) — no credit card required
-- A free [Vercel](https://vercel.com) account for deployment
+- Node.js 20.x or higher (or Bun 1.1+)
+- PostgreSQL database instance (e.g., Supabase)
+- S3-compatible cloud storage bucket for media assets
 
-### 1. Clone and install
+### Installation
 
-```bash
-git clone <your-repo-url> raven
-cd raven
-npm install
-```
+1. Clone the repository:
+   ```bash
+   git clone <repository-url> raven
+   cd raven
+   ```
 
-### 2. Environment variables
+2. Install dependencies:
+   ```bash
+   bun install
+   # or: npm install
+   ```
 
-Create a `.env.local` file in the project root:
+3. Configure environment variables:
+   Create a `.env.local` file in the root directory with the following variables:
+   ```env
+   # Database & Supabase
+   DATABASE_URL=postgresql://<user>:<password>@<host>:5432/postgres
+   SUPABASE_URL=https://<project-ref>.supabase.co
+   SUPABASE_ANON_KEY=<anon-key>
+   SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 
-```bash
-# Supabase
-DATABASE_URL=postgresql://<user>:<password>@<host>:5432/postgres
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_ANON_KEY=<your-anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+   # Payload CMS
+   PAYLOAD_SECRET=<secure-random-string>
 
-# Payload
-PAYLOAD_SECRET=<a-long-random-string>
+   # Revalidation & Internal APIs
+   NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+   REVALIDATE_SECRET=<secure-random-string>
 
-# Revalidation (used by the admin publish hook)
-REVALIDATE_SECRET=<a-long-random-string>
+   # AI Integration (Optional)
+   AI_API_KEY=<provider-api-key>
+   ```
 
-# Optional: AI-assisted markdown generation
-AI_API_KEY=<your-provider-key>
-```
+4. Apply database schema migrations:
+   ```bash
+   bun run payload:migrate
+   # or: npm run payload:migrate
+   ```
 
-### 3. Run database migrations
+5. Start the development server:
+   ```bash
+   bun run dev
+   # or: npm run dev
+   ```
 
-```bash
-npm run payload:migrate
-```
+- Public Application: `http://localhost:3000`
+- Administration Control Panel: `http://localhost:3000/admin`
 
-### 4. Start the dev server
+On initial launch, the administration interface will prompt for the creation of the primary administrative credentials.
 
-```bash
-npm run dev
-```
+---
 
-- Public site: `http://localhost:3000`
-- Admin playground: `http://localhost:3000/admin`
+## Available Scripts
 
-On first run, the admin panel prompts you to create the first admin user.
+| Script | Purpose |
+| :--- | :--- |
+| `bun run dev` | Starts the Next.js development server with Turbopack |
+| `bun run build` | Compiles the production application bundle and Service Worker |
+| `bun run start` | Launches the compiled production application server |
+| `bun run payload:migrate` | Executes pending Payload CMS database migrations |
+| `bun run lint` | Runs ESLint analysis across the repository |
 
-## Project structure
-
-```
-/app            Next.js routes: public reader pages, admin mount, API routes
-/collections    Payload collection definitions: Node (taxonomy), Chapter (blocks)
-/components
-  /reader       Public-facing block renderers (markdown/image/youtube)
-  /admin        Taxonomy tree (react-arborist), block editor (dnd-kit + Tiptap), live preview
-/lib
-  /db           Supabase client
-  /search       Search index generation + Fuse/FlexSearch setup
-  /offline      Dexie schema + Zustand store (branch, theme, pinned items)
-/public         PWA manifest, icons
-/sw             Service worker configuration (Serwist)
-```
-
-See `architecture.md` for a detailed breakdown of every layer.
-
-## Scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Start the local dev server |
-| `npm run build` | Production build |
-| `npm run start` | Start the production server locally |
-| `npm run payload:migrate` | Run Payload/database migrations |
-| `npm run lint` | Lint the codebase |
-
-## Keeping the free tier alive
-
-Supabase's free tier pauses a project after 7 days with no database activity. This repo includes a GitHub Actions workflow (`.github/workflows/keepalive.yml`) that pings a lightweight API route every few days to reset that window — no ongoing action needed once the workflow is enabled on your repo.
+---
 
 ## Deployment
 
-1. Push this repo to GitHub.
-2. Import it into Vercel (Hobby tier is fine to start).
-3. Add the same environment variables from `.env.local` to your Vercel project settings.
-4. Deploy. From then on, publishing content from the admin playground updates the live site within seconds via on-demand revalidation — no redeploy required for content changes.
-
+1. Configure environment variables within your hosting provider (such as Vercel).
+2. Ensure build command is set to `next build` and install command matches your chosen package manager (`bun install` or `npm install`).
+3. Deploy the application. Post-deployment content publications instantly update the live site via on-demand ISR revalidation hooks without requiring redeployment.
