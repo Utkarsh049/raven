@@ -5,6 +5,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { Grid, GridCard } from "@/components/GridCard";
 
 export const dynamicParams = true;
+export const revalidate = 3600;
 
 export default async function BranchPage({ params }: { params: Promise<{ branch: string }> }) {
   const { branch } = await params;

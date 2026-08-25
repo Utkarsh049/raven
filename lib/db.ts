@@ -27,3 +27,23 @@ export async function getPref(key: string): Promise<string | null> {
 export async function setPref(key: string, value: string) {
   await db.prefs.put({ key, value, updatedAt: Date.now() });
 }
+
+export type BranchCacheItem = { slug: string; title: string };
+
+export async function getBranchesCache(): Promise<BranchCacheItem[]> {
+  try {
+    const raw = await getPref("cached_branches");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function setBranchesCache(branches: BranchCacheItem[]) {
+  try {
+    await setPref("cached_branches", JSON.stringify(branches));
+  } catch {}
+}
+

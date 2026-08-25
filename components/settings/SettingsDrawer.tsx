@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSettingsStore, type Theme } from "@/lib/settings-store";
+import { getBranchesCache, setBranchesCache, type BranchCacheItem } from "@/lib/db";
 import {
   Select,
   SelectContent,
@@ -10,14 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type BranchOption = { slug: string; title: string };
-
-
 export function SettingsDrawer() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [branches, setBranches] = useState<BranchOption[]>([]);
+  const [branches, setBranches] = useState<BranchCacheItem[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
   const branchSlug = useSettingsStore((s) => s.branchSlug);
   const theme = useSettingsStore((s) => s.theme);
@@ -42,27 +40,36 @@ export function SettingsDrawer() {
     return () => { document.body.style.overflow = prev; };
   }, [mounted]);
 
+  // Eagerly load branches from IndexedDB cache on mount and fetch fresh list in background
   useEffect(() => {
-    if (!open) return;
     let cancelled = false;
-    setLoadingBranches(true);
-    fetch("/api/nodes?where[type][equals]=branch&where[status][equals]=published&limit=100&depth=0", { cache: "no-store" })
-      .then((r) => r.json())
+
+    // 1. Instant hydration from IndexedDB
+    getBranchesCache().then((cached) => {
+      if (!cancelled && cached && cached.length > 0) {
+        setBranches(cached);
+      }
+    });
+
+    // 2. Background stale-while-revalidate fetch
+    fetch("/api/nodes?where[type][equals]=branch&where[status][equals]=published&limit=100&depth=0")
+      .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
-        if (cancelled) return;
-        const docs = (json?.docs ?? []) as Array<{ slug: string; title: string }>;
-        setBranches(docs.map((d) => ({ slug: d.slug, title: d.title })).filter((b) => b.slug));
+        if (cancelled || !json?.docs) return;
+        const docs = (json.docs as Array<{ slug: string; title: string }>)
+          .map((d) => ({ slug: d.slug, title: d.title }))
+          .filter((b) => Boolean(b.slug && b.title));
+        if (docs.length > 0) {
+          setBranches(docs);
+          setBranchesCache(docs);
+        }
       })
-      .catch(() => {
-        if (!cancelled) setBranches([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingBranches(false);
-      });
+      .catch(() => {});
+
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -110,40 +117,34 @@ export function SettingsDrawer() {
               <section className="space-y-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Branch</h3>
                 <p className="text-xs text-muted-foreground">Preferred branch for navigation. Saved offline.</p>
-                {loadingBranches ? (
-                  <p className="text-sm text-muted-foreground">Loading branches…</p>
-                ) : branches.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No published branches yet.</p>
-                ) : (
-                  <div className="grid gap-2">
-                    <label htmlFor="branch-select" className="text-xs font-medium">
-                      Preferred branch
-                    </label>
-                    <Select
-                      value={branchSlug ?? "none"}
-                      onValueChange={(val) => setBranchSlug(val === "none" ? null : val)}
-                    >
-                      <SelectTrigger id="branch-select" className="w-full bg-background">
-                        <SelectValue placeholder="Select a branch" />
-                      </SelectTrigger>
-                      <SelectContent className="z-[70]" position="popper">
-                        <SelectItem value="none">— No preference —</SelectItem>
-                        {branches.map((b) => (
-                          <SelectItem key={b.slug} value={b.slug}>
-                            {b.title} ({b.slug})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {branchSlug ? (
-                      <a href={`/${branchSlug}`} className="text-xs text-primary underline">
-                        Go to {branchSlug}
-                      </a>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Browse from the home page or a chapter link.</p>
-                    )}
-                  </div>
-                )}
+                <div className="grid gap-2">
+                  <label htmlFor="branch-select" className="text-xs font-medium">
+                    Preferred branch
+                  </label>
+                  <Select
+                    value={branchSlug ?? "none"}
+                    onValueChange={(val) => setBranchSlug(val === "none" ? null : val)}
+                  >
+                    <SelectTrigger id="branch-select" className="w-full bg-background">
+                      <SelectValue placeholder="Select a branch" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[70]" position="popper">
+                      <SelectItem value="none">— No preference —</SelectItem>
+                      {branches.map((b) => (
+                        <SelectItem key={b.slug} value={b.slug}>
+                          {b.title} ({b.slug})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {branchSlug ? (
+                    <a href={`/${branchSlug}`} className="text-xs text-primary underline">
+                      Go to {branchSlug}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Browse from the home page or a chapter link.</p>
+                  )}
+                </div>
               </section>
 
               <section className="space-y-2">

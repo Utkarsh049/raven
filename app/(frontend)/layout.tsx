@@ -5,6 +5,7 @@ import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { SettingsDrawer } from "@/components/settings/SettingsDrawer";
 import { PinsHydrator } from "@/components/pins/PinsHydrator";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { SearchBox } from "@/components/search/SearchBox";
 import { ThemeScript } from "@/components/settings/ThemeScript";
 
@@ -61,6 +62,7 @@ export default function RootLayout({
           </header>
           {children}
           <InstallPrompt />
+          <ServiceWorkerRegister />
         </SettingsProvider>
       </body>
     </html>

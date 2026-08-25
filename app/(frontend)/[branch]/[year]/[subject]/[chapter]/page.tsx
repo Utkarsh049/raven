@@ -10,6 +10,7 @@ type Params = { branch: string; year: string; subject: string; chapter: string }
 
 
 export const dynamicParams = true;
+export const revalidate = 3600;
 
 export async function generateStaticParams(): Promise<Params[]> {
   try {

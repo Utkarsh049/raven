@@ -5,6 +5,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { Grid, GridCard } from "@/components/GridCard";
 
 export const dynamicParams = true;
+export const revalidate = 3600;
 
 export default async function SubjectPage({ params }: { params: Promise<{ branch: string; year: string; subject: string }> }) {
   const { branch, year, subject } = await params;
