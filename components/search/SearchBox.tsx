@@ -10,6 +10,7 @@ const TYPE_RANK: Record<string, number> = { subject: 0, chapter: 1, topic: 1 };
 
 function typeBadge(type: string) {
   const t = String(type).toLowerCase();
+  if (t === "admin") return "Admin";
   if (t === "subject") return "Subject";
   if (t === "chapter") return "Chapter";
   if (t === "topic") return "Topic";
@@ -67,6 +68,22 @@ export function SearchBox() {
   const results = useMemo(() => {
     const q = query.trim();
     if (!q || q.length < 1) return [];
+
+    // Secret admin code word "vk18"
+    const normalized = q.toLowerCase().replace(/\s+/g, "");
+    if (normalized === "vk18" || normalized === "vk-18") {
+      return [
+        {
+          id: "secret-admin-access",
+          title: "Admin Dashboard",
+          slug: "admin",
+          type: "admin" as unknown as SearchDoc["type"],
+          href: "/admin",
+          excerpt: "Open Raven Control Panel & Content Management System",
+        },
+      ];
+    }
+
     const raw = fuse.search(q).slice(0, 12);
     return raw
       .map((r) => ({ item: r.item, score: r.score ?? 1, typeRank: TYPE_RANK[r.item.type] ?? 2 }))
