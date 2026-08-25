@@ -7,12 +7,32 @@ type BranchOption = { slug: string; title: string };
 
 export function SettingsDrawer() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
   const branchSlug = useSettingsStore((s) => s.branchSlug);
   const theme = useSettingsStore((s) => s.theme);
   const setBranchSlug = useSettingsStore((s) => s.setBranchSlug);
   const setTheme = useSettingsStore((s) => s.setTheme);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      const id = requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+      return () => cancelAnimationFrame(id);
+    }
+    setVisible(false);
+    const t = setTimeout(() => setMounted(false), 300);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [mounted]);
 
   useEffect(() => {
     if (!open) return;
@@ -52,19 +72,24 @@ export function SettingsDrawer() {
         aria-label="Open settings"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+        className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
       >
         <span aria-hidden className="text-base leading-none">⚙</span>
       </button>
 
-      {open && (
+      {mounted && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          <button type="button" aria-label="Close settings" className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" onClick={() => setOpen(false)} />
+          <button
+            type="button"
+            aria-label="Close settings"
+            onClick={() => setOpen(false)}
+            className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
+          />
           <aside
             role="dialog"
             aria-modal="true"
             aria-label="Settings"
-            className="relative flex h-dvh w-[360px] max-w-[86vw] flex-col border-l bg-background shadow-xl"
+            className={`relative flex h-[100dvh] w-[88vw] sm:w-[380px] max-w-[90vw] flex-col border-l bg-background shadow-xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform ${visible ? "translate-x-0" : "translate-x-full"}`}
           >
             <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
               <h2 className="text-sm font-semibold">Settings</h2>

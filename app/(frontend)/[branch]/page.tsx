@@ -14,14 +14,18 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
   const yearsRes = await payload.find({ collection: "nodes", where: { parent: { equals: node.id }, type: { equals: "year" }, status: { equals: "published" } }, limit: 20, depth: 0, sort: "orderIndex", overrideAccess: false } as never);
   const years = (yearsRes.docs ?? []) as unknown as Array<{ slug: string; title: string }>;
   return (
-    <main id="main-content" className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{String(node.title)}</h1>
-      {years.length === 0 ? <p className="mt-4 text-sm text-muted-foreground">No years yet.</p> : (
-        <ul className="mt-6 grid gap-2">
+    <main id="main-content" className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{String(node.title)}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Years</p>
+      {years.length === 0 ? <p className="mt-6 text-sm text-muted-foreground">No years yet.</p> : (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 sm:gap-4">
           {years.map((y) => (
-            <li key={y.slug}><Link href={`/${branch}/${y.slug}`} className="rounded-md border px-3 py-2 text-sm hover:bg-accent flex justify-between">{y.title}<span>→</span></Link></li>
+            <Link key={y.slug} href={`/${branch}/${y.slug}`} className="group flex aspect-square flex-col justify-between rounded-2xl border bg-card p-4 sm:p-5 shadow-sm transition-colors hover:bg-accent hover:border-accent-foreground/10 active:scale-[0.98]">
+              <span className="text-sm sm:text-base font-semibold leading-tight line-clamp-3">{y.title}</span>
+              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">Open <span aria-hidden>→</span></span>
+            </Link>
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );

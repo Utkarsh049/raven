@@ -57,7 +57,6 @@ export function SearchBox() {
     const q = query.trim();
     if (!q || q.length < 1) return [];
     const raw = fuse.search(q).slice(0, 12);
-    // Boost by type: subject > chapter/topic > content-heavy
     return raw
       .map((r) => ({ item: r.item, score: r.score ?? 1, typeRank: TYPE_RANK[r.item.type] ?? 2 }))
       .sort((a, b) => {
@@ -68,7 +67,7 @@ export function SearchBox() {
   }, [fuse, query]);
 
   return (
-    <div className="relative w-full max-w-md">
+    <div className="relative w-full">
       <input
         value={query}
         onChange={(e) => {
@@ -77,37 +76,66 @@ export function SearchBox() {
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 180)}
-        placeholder="Search subjects, chapters…"
+        placeholder="Search…"
         aria-label="Search"
-        className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+        className="h-9 sm:h-9 w-full rounded-full border bg-muted/40 px-3.5 sm:px-3 text-sm focus:bg-background"
       />
+      {/* Desktop: anchored dropdown */}
       {open && results.length > 0 && (
-        <ul className="absolute left-0 right-0 z-40 mt-1 max-h-96 overflow-auto rounded-md border bg-popover p-1 shadow-lg">
+        <ul className="hidden sm:block absolute left-0 right-0 z-40 mt-2 max-h-[420px] overflow-auto rounded-xl border bg-popover p-2 shadow-xl">
           {results.map((r) => (
             <li key={r.id}>
               <Link
                 href={r.href ?? "#"}
-                className="flex items-start justify-between gap-2 rounded px-3 py-2 hover:bg-accent"
+                className="flex items-start justify-between gap-3 rounded-lg px-3 py-2.5 hover:bg-accent"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setOpen(false)}
               >
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium">{r.title}</span>
-                    <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium">{r.title}</span>
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                       {typeBadge(r.type)}
                     </span>
                   </span>
-                  <span className="mt-0.5 block truncate text-xs text-muted-foreground">{r.excerpt.slice(0, 110)}</span>
-                  {r.href && <span className="block truncate text-[11px] text-muted-foreground/70">{r.href}</span>}
+                  <span className="mt-1 block line-clamp-2 text-xs leading-relaxed text-muted-foreground">{r.excerpt.slice(0, 140)}</span>
+                  {r.href && <span className="mt-1 block truncate text-[11px] text-muted-foreground/60">{r.href}</span>}
                 </span>
               </Link>
             </li>
           ))}
         </ul>
       )}
+      {/* Mobile: full-width sheet */}
+      {open && results.length > 0 && (
+        <div className="sm:hidden fixed inset-x-0 top-[48px] z-40 max-h-[58dvh] overflow-auto border-y bg-background p-2 shadow-lg">
+          <ul className="grid gap-1">
+            {results.map((r) => (
+              <li key={r.id}>
+                <Link
+                  href={r.href ?? "#"}
+                  className="flex min-h-[64px] items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 active:bg-accent"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setOpen(false)}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="truncate text-[15px] font-semibold">{r.title}</span>
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                        {typeBadge(r.type)}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">{r.excerpt.slice(0, 90)}</span>
+                  </span>
+                  <span className="shrink-0 text-muted-foreground">→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {open && query.trim().length >= 1 && results.length === 0 && docs.length > 0 && (
-        <div className="absolute left-0 right-0 z-40 mt-1 rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-lg">
+        <div className="absolute left-0 right-0 z-40 mt-2 rounded-xl border bg-popover px-3 py-3 text-sm text-muted-foreground shadow-lg sm:shadow-xl">
           No results.
         </div>
       )}

@@ -106,6 +106,8 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
+  /* Prevent iOS double-tap zoom on header controls */
+  header button, header a { touch-action: manipulation; }
 }
 
 /* Tiptap editor styling */
