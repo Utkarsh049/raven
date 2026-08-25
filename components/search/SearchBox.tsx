@@ -25,8 +25,8 @@ export function SearchBox() {
     let cancelled = false;
     const load = async () => {
       try {
-        let res = await fetch("/api/search-index", { cache: "no-store" });
-        if (!res.ok) res = await fetch("/search-index.json", { cache: "no-store" });
+        let res = await fetch("/api/search-index");
+        if (!res.ok) res = await fetch("/search-index.json");
         if (!res.ok) return;
         const json = (await res.json()) as SearchDoc[];
         if (!cancelled) setDocs(Array.isArray(json) ? json : []);

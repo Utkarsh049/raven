@@ -107,8 +107,11 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
-  /* Prevent iOS double-tap zoom on header controls */
-  header button, header a { touch-action: manipulation; }
+  /* Eliminate 300ms tap delay and tap grey flashes across mobile PWA */
+  a, button, [role="button"], input, select, textarea {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 /* Tiptap editor styling */
