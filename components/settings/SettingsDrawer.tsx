@@ -93,22 +93,26 @@ export function SettingsDrawer() {
       </button>
 
       {mounted && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <button
-            type="button"
-            aria-label="Close settings"
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div
+            aria-hidden="true"
             onClick={() => setOpen(false)}
-            className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
+            className={`fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
           />
           <aside
             role="dialog"
             aria-modal="true"
             aria-label="Settings"
-            className={`relative flex h-[100dvh] w-[88vw] sm:w-[380px] max-w-[90vw] flex-col border-l bg-background shadow-xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform ${visible ? "translate-x-0" : "translate-x-full"}`}
+            className={`fixed inset-y-0 right-0 z-50 flex h-[100dvh] w-[85vw] max-w-[380px] flex-col border-l bg-background shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform ${visible ? "translate-x-0" : "translate-x-full"}`}
           >
             <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
               <h2 className="text-sm font-semibold">Settings</h2>
-              <button type="button" onClick={() => setOpen(false)} className="rounded px-2 py-1.5 mr-4 text-sm text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Close">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+                aria-label="Close"
+              >
                 ✕
               </button>
             </div>
