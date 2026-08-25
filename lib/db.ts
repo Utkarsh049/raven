@@ -36,7 +36,8 @@ export async function getBranchesCache(): Promise<BranchCacheItem[]> {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
-  } catch {
+  } catch (err) {
+    console.error("Dexie getBranchesCache error:", err);
     return [];
   }
 }
@@ -44,6 +45,8 @@ export async function getBranchesCache(): Promise<BranchCacheItem[]> {
 export async function setBranchesCache(branches: BranchCacheItem[]) {
   try {
     await setPref("cached_branches", JSON.stringify(branches));
-  } catch {}
+  } catch (err) {
+    console.error("Dexie setBranchesCache error:", err);
+  }
 }
 

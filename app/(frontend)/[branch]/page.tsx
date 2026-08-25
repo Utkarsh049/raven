@@ -40,7 +40,7 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
   const yearsRes = await payload.find({
     collection: "nodes",
     where: { parent: { equals: node.id }, type: { equals: "year" }, status: { equals: "published" } },
-    limit: 20,
+    pagination: false,
     depth: 0,
     sort: "orderIndex",
     select: { id: true, title: true, slug: true },

@@ -6,6 +6,7 @@ const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts",
   swDest: "public/sw.js",
   reloadOnOnline: true,
+  register: false,
   disable: process.env.NODE_ENV === "development",
 });
 
@@ -16,7 +17,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/:all*(svg|jpg|jpeg|png|webp|avif|ico|woff|woff2|ttf|webmanifest)",
+        source: "/:all*(woff|woff2|ttf)",
         headers: [
           {
             key: "Cache-Control",
@@ -25,11 +26,11 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/(icon-192.png|icon-512.png|icon.png|og.png|manifest.webmanifest)",
+        source: "/:all*(svg|jpg|jpeg|png|webp|avif|ico|webmanifest)",
         headers: [
           {
             key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
           },
         ],
       },

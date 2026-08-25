@@ -69,7 +69,7 @@ export default async function YearPage({ params }: { params: Promise<{ branch: s
   const subsRes = await payload.find({
     collection: "nodes",
     where: { parent: { equals: y.id }, type: { equals: "subject" }, status: { equals: "published" } },
-    limit: 20,
+    pagination: false,
     depth: 0,
     sort: "orderIndex",
     select: { id: true, title: true, slug: true },

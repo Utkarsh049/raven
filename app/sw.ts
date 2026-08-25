@@ -17,12 +17,11 @@ const serwist = new Serwist({
   navigationPreload: true,
   runtimeCaching: [
     {
-      // Cache app icons, logo, and webmanifest with CacheFirst for instant loads
-      matcher: ({ url }: { url: URL }) =>
-        url.pathname.endsWith(".png") ||
-        url.pathname.endsWith(".ico") ||
-        url.pathname.endsWith(".svg") ||
-        url.pathname.endsWith(".webmanifest"),
+      // Cache app icons, logo, and webmanifest with CacheFirst for instant loads (same-origin only)
+      matcher: ({ sameOrigin, url }: { sameOrigin?: boolean; url: URL }) =>
+        Boolean(sameOrigin) &&
+        (/^\/(icon(-[0-9]+)?|favicon|og|apple-touch-icon)\.(png|ico|svg)$/.test(url.pathname) ||
+          url.pathname === "/manifest.webmanifest"),
       handler: new CacheFirst({
         cacheName: "raven-static-icons",
         plugins: [
@@ -34,7 +33,7 @@ const serwist = new Serwist({
       // Cache user-facing pages and Next.js RSC data requests
       matcher: ({ url, request }: { url: URL; request: Request }) => {
         if (request.method !== "GET") return false;
-        if (url.pathname.startsWith("/admin") || url.pathname.startsWith("/api/graphql") || url.pathname.startsWith("/api/mcp")) return false;
+        if (url.pathname.startsWith("/admin") || url.pathname.startsWith("/api/")) return false;
         return (
           request.mode === "navigate" ||
           url.searchParams.has("_rsc") ||

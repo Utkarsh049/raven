@@ -35,13 +35,26 @@ export function SearchBox() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      let json: SearchDoc[] = [];
       try {
-        let res = await fetch("/api/search-index");
-        if (!res.ok) res = await fetch("/search-index.json");
-        if (!res.ok) return;
-        const json = (await res.json()) as SearchDoc[];
-        if (!cancelled) setDocs(Array.isArray(json) ? json : []);
+        const res = await fetch("/api/search-index").catch(() => null);
+        if (res && res.ok) {
+          json = (await res.json()) as SearchDoc[];
+        }
       } catch {}
+
+      if (!Array.isArray(json) || json.length === 0) {
+        try {
+          const fallbackRes = await fetch("/search-index.json").catch(() => null);
+          if (fallbackRes && fallbackRes.ok) {
+            json = (await fallbackRes.json()) as SearchDoc[];
+          }
+        } catch {}
+      }
+
+      if (!cancelled && Array.isArray(json) && json.length > 0) {
+        setDocs(json);
+      }
     };
     load();
     return () => {
@@ -84,13 +97,14 @@ export function SearchBox() {
       ];
     }
 
-    const raw = fuse.search(q).slice(0, 12);
+    const raw = fuse.search(q);
     return raw
       .map((r) => ({ item: r.item, score: r.score ?? 1, typeRank: TYPE_RANK[r.item.type] ?? 2 }))
       .sort((a, b) => {
         if (a.typeRank !== b.typeRank) return a.typeRank - b.typeRank;
         return a.score - b.score;
       })
+      .slice(0, 12)
       .map((r) => r.item);
   }, [fuse, query]);
 

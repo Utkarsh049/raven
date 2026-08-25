@@ -145,10 +145,18 @@ export const Nodes: CollectionConfig = {
             const parentChanged = previousDoc && parentIdOf((previousDoc as { parent?: unknown }).parent) !== parentIdOf((doc as { parent?: unknown }).parent);
             const statusChanged = prevStatus !== docStatus;
             if (docStatus === "published" || prevStatus === "published" || slugChanged || parentChanged || statusChanged) {
+              revalidatePath("/");
               const descendantIds = await findDescendantPublishedChapterIds(req.payload as never, docId);
               for (const cid of descendantIds) {
                 const p = await resolveChapterPath(req.payload as never, cid);
-                if (p) revalidatePath(p);
+                if (p) {
+                  revalidatePath(p);
+                  // Also revalidate ancestor listings along this chapter path
+                  const segments = p.split("/").filter(Boolean);
+                  if (segments[0]) revalidatePath(`/${segments[0]}`);
+                  if (segments[0] && segments[1]) revalidatePath(`/${segments[0]}/${segments[1]}`);
+                  if (segments[0] && segments[1] && segments[2]) revalidatePath(`/${segments[0]}/${segments[1]}/${segments[2]}`);
+                }
               }
               if (slugChanged && previousDoc) {
                 const prevSlug = String((previousDoc as { slug: string }).slug);
@@ -164,7 +172,12 @@ export const Nodes: CollectionConfig = {
                     if (parts[idx] === newSlug) {
                       const oldP = [...parts];
                       oldP[idx] = prevSlug;
-                      revalidatePath(oldP.join("/"));
+                      const oldPathStr = oldP.join("/");
+                      revalidatePath(oldPathStr);
+                      const oldSegs = oldPathStr.split("/").filter(Boolean);
+                      if (oldSegs[0]) revalidatePath(`/${oldSegs[0]}`);
+                      if (oldSegs[0] && oldSegs[1]) revalidatePath(`/${oldSegs[0]}/${oldSegs[1]}`);
+                      if (oldSegs[0] && oldSegs[1] && oldSegs[2]) revalidatePath(`/${oldSegs[0]}/${oldSegs[1]}/${oldSegs[2]}`);
                     }
                   }
                 }

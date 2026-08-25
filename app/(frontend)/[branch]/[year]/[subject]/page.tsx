@@ -85,7 +85,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ branch
   const chsRes = await payload.find({
     collection: "nodes",
     where: { parent: { equals: s.id }, type: { equals: "chapter" }, status: { equals: "published" } },
-    limit: 20,
+    pagination: false,
     depth: 0,
     sort: "orderIndex",
     select: { id: true, title: true, slug: true },
