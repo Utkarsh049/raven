@@ -69,9 +69,9 @@ export function SearchBox() {
     const q = query.trim();
     if (!q || q.length < 1) return [];
 
-    // Secret admin code word "vk18"
-    const normalized = q.toLowerCase().replace(/\s+/g, "");
-    if (normalized === "vk18" || normalized === "vk-18") {
+    // Secret admin code word "vk18" (case-insensitive, handles any spacing or punctuation like VK18, vk 18, vk-18, Vk_18)
+    const clean = q.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (clean === "vk18") {
       return [
         {
           id: "secret-admin-access",
@@ -136,8 +136,8 @@ export function SearchBox() {
       }
 
       if (e.key === "Enter") {
-        if (activeIndex >= 0 && activeIndex < results.length) {
-          const selected = results[activeIndex];
+        if (results.length > 0) {
+          const selected = activeIndex >= 0 && activeIndex < results.length ? results[activeIndex] : results[0];
           if (selected?.href) {
             e.preventDefault();
             setOpen(false);
