@@ -97,14 +97,20 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
   }
   :focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  /* Eliminate 300ms tap delay and tap grey flashes across mobile PWA */
+  a, button, [role="button"], input, select, textarea {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

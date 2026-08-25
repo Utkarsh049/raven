@@ -18,8 +18,12 @@ export default buildConfig({
   globals: [AISettings],
   admin: {
     user: Users.slug,
-    meta: { icons: [{ rel: "icon", url: "/icon.png" }], titleSuffix: " — Raven" },
+    meta: { icons: [{ rel: "icon", url: "/icon-512.png" }], titleSuffix: " — Raven" },
     components: {
+      graphics: {
+        Logo: "@/components/admin/AdminGraphics#AdminLogo",
+        Icon: "@/components/admin/AdminGraphics#AdminIcon",
+      },
       views: {
         taxonomy: {
           Component: "@/components/admin/TaxonomyView#TaxonomyView",
