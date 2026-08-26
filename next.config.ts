@@ -11,6 +11,12 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  experimental: {
+    staleTimes: {
+      dynamic: 0,    // Keep admin live without stale form cache
+      static: 1800,  // 30 minutes for all frontend static routes
+    },
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**.supabase.co" }, { protocol: "https", hostname: "i.ytimg.com" }],
   },

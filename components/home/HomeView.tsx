@@ -218,9 +218,14 @@ export function HomeView({ initialBranches, initialYears }: HomeViewProps) {
                   className="group relative flex flex-col justify-between rounded-2xl border bg-card p-4 sm:p-5 shadow-xs transition-all hover:bg-accent/50 hover:border-border/80 hover:shadow-md"
                 >
                   <div className="min-w-0 pr-6">
-                    <span className="inline-block rounded bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                      {pin.kind}
-                    </span>
+                    <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                      <span className="inline-block rounded bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {pin.kind}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        Offline Ready
+                      </span>
+                    </div>
                     <Link
                       href={pin.href}
                       className="block text-sm sm:text-base font-semibold text-foreground hover:underline line-clamp-2 break-words"
