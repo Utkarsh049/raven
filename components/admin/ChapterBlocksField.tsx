@@ -270,7 +270,7 @@ export function ChapterBlocksField(props: { path: string }) {
           <p className="raven-subtitle">Add a Markdown, Image, or YouTube block above to start building chapter content.</p>
         </div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext id="chapter-blocks-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={ids} strategy={verticalListSortingStrategy}>
             <div className="raven-blocks-stack">
               {value.map((row, index) => {
