@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePinsStore } from "@/lib/pins-store";
 import { Breadcrumb } from "@/components/Breadcrumb";
@@ -12,10 +12,44 @@ interface BranchViewProps {
   years: Array<{ slug: string; title: string }>;
 }
 
+function getInitialBranchTab(): "browse" | "pinned" {
+  if (typeof window === "undefined") return "browse";
+  const params = new URLSearchParams(window.location.search);
+  const tabParam = params.get("tab");
+  if (tabParam === "pinned") return "pinned";
+  if (tabParam === "browse" || tabParam === "years") return "browse";
+  const saved = sessionStorage.getItem("raven_active_tab");
+  if (saved === "pinned") return "pinned";
+  return "browse";
+}
+
 export function BranchView({ branchSlug, branchTitle, years }: BranchViewProps) {
-  const [activeTab, setActiveTab] = useState<"browse" | "pinned">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "pinned">(getInitialBranchTab);
   const pins = usePinsStore((s) => s.pins);
   const togglePin = usePinsStore((s) => s.toggle);
+
+  // Sync tab state with browser back/forward history (popstate)
+  useEffect(() => {
+    const onPopState = () => {
+      setActiveTab(getInitialBranchTab());
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const handleTabChange = (tab: "browse" | "pinned") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("raven_active_tab", tab);
+      const url = new URL(window.location.href);
+      if (tab === "pinned") {
+        url.searchParams.set("tab", "pinned");
+      } else {
+        url.searchParams.delete("tab");
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
 
   return (
     <main id="main-content" className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
@@ -38,7 +72,7 @@ export function BranchView({ branchSlug, branchTitle, years }: BranchViewProps) 
         <div className="inline-flex self-start sm:self-auto p-1 rounded-xl bg-muted/80 border">
           <button
             type="button"
-            onClick={() => setActiveTab("browse")}
+            onClick={() => handleTabChange("browse")}
             className={`inline-flex items-center px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
               activeTab === "browse"
                 ? "bg-background text-foreground shadow-xs font-semibold"
@@ -49,7 +83,7 @@ export function BranchView({ branchSlug, branchTitle, years }: BranchViewProps) 
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("pinned")}
+            onClick={() => handleTabChange("pinned")}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
               activeTab === "pinned"
                 ? "bg-background text-foreground shadow-xs font-semibold"
