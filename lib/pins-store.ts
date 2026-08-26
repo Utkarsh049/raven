@@ -3,6 +3,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { getPref, setPref } from "./db";
+import {
+  cacheChapterForOffline,
+  removeChapterFromOffline,
+  syncAllPinsOffline,
+} from "./offline-cache";
 
 export type PinnedItem = {
   id: string;
@@ -34,9 +39,18 @@ export const usePinsStore = create<PinsState>()(
       hydrated: false,
       toggle: (item) => {
         const exists = get().pins.some((p) => p.id === item.id);
-        const next = exists ? get().pins.filter((p) => p.id !== item.id) : [...get().pins, { ...item, pinnedAt: Date.now() }];
+        const next = exists
+          ? get().pins.filter((p) => p.id !== item.id)
+          : [...get().pins, { ...item, pinnedAt: Date.now() }];
         set({ pins: next, pinnedIds: next.map((p) => p.id) });
         syncPinsToDexie(next);
+
+        // Proactively prime or clear offline cache
+        if (exists) {
+          removeChapterFromOffline(item.href);
+        } else {
+          cacheChapterForOffline(item.href);
+        }
       },
       reorder: (fromIndex, toIndex) => {
         const next = [...get().pins];
@@ -52,18 +66,28 @@ export const usePinsStore = create<PinsState>()(
           const raw = await getPref("pins");
           const state = get();
           const hasLocalPins = state.pins.length > 0;
+          let activePins: PinnedItem[] = [];
+
           if (raw) {
             const parsed = JSON.parse(raw) as PinnedItem[];
             if (Array.isArray(parsed) && parsed.length > 0) {
+              activePins = parsed;
               if (!hasLocalPins) set({ pins: parsed, pinnedIds: parsed.map((p) => p.id) });
               else syncPinsToDexie(state.pins);
             } else if (!hasLocalPins) {
               set({ pins: [], pinnedIds: [] });
             }
           } else if (hasLocalPins) {
+            activePins = state.pins;
             syncPinsToDexie(state.pins);
           }
+
           set({ hydrated: true });
+
+          // Background sync all pinned items to ensure offline availability
+          if (activePins.length > 0) {
+            syncAllPinsOffline(activePins);
+          }
         } catch {
           set({ hydrated: true });
         }

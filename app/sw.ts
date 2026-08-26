@@ -30,20 +30,21 @@ const serwist = new Serwist({
       }),
     },
     {
-      // Cache user-facing pages and Next.js RSC data requests
-      matcher: ({ url, request }: { url: URL; request: Request }) => {
+      // Cache user-facing pages, HTML navigations, and Next.js RSC data requests
+      matcher: ({ sameOrigin, url, request }: { sameOrigin?: boolean; url: URL; request: Request }) => {
         if (request.method !== "GET") return false;
         if (url.pathname.startsWith("/admin") || url.pathname.startsWith("/api/")) return false;
         return (
           request.mode === "navigate" ||
           url.searchParams.has("_rsc") ||
-          url.pathname.match(/^\/[^/]+(\/[^/]+)*$/) !== null
+          request.headers.get("RSC") === "1" ||
+          (Boolean(sameOrigin) && !url.pathname.includes("."))
         );
       },
       handler: new StaleWhileRevalidate({
         cacheName: "raven-pages",
         plugins: [
-          new ExpirationPlugin({ maxEntries: 256, maxAgeSeconds: 30 * 24 * 60 * 60, maxAgeFrom: "last-used" }),
+          new ExpirationPlugin({ maxEntries: 512, maxAgeSeconds: 30 * 24 * 60 * 60, maxAgeFrom: "last-used" }),
         ],
       }),
     },

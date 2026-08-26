@@ -176,13 +176,20 @@ export function ChapterBlocksField(props: { path: string }) {
 
   const addBlock = useCallback(
     (blockType: BlockRow["blockType"]) => {
+      const newId = uid();
       const base: BlockRow =
         blockType === "markdown"
-          ? { id: uid(), blockType, content: "" }
+          ? { id: newId, blockType, content: "" }
           : blockType === "image"
-            ? { id: uid(), blockType, url: "", alt: "", caption: "" }
-            : { id: uid(), blockType, videoId: "", title: "" };
+            ? { id: newId, blockType, url: "", alt: "", caption: "" }
+            : { id: newId, blockType, videoId: "", title: "" };
       setValue([...value, base]);
+      setTimeout(() => {
+        const el = document.getElementById(newId);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }, 60);
     },
     [setValue, value],
   );
@@ -233,33 +240,44 @@ export function ChapterBlocksField(props: { path: string }) {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>Blocks</span>
-          <span className="raven-subtitle" style={{ fontSize: "0.75rem" }}>hold ⋮⋮ to drag or tap ▲▼</span>
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      {/* Sticky top toolbar */}
+      <div className="raven-blocks-sticky-toolbar">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", minWidth: 0 }}>
+          <span style={{ fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+            Blocks ({value.length})
+          </span>
+          <span className="raven-subtitle raven-hide-mobile" style={{ fontSize: "0.75rem" }}>
+            hold ⋮⋮ to drag · tap ▲▼
+          </span>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
+        <div className="raven-blocks-toolbar-actions">
           <button
             type="button"
             onClick={() => addBlock("markdown")}
-            className="raven-btn"
+            className="raven-btn raven-btn-primary"
+            title="Add Markdown Block"
           >
-            + Markdown
+            <span className="raven-btn-short">+ MD</span>
+            <span className="raven-btn-long">+ Markdown</span>
           </button>
           <button
             type="button"
             onClick={() => addBlock("image")}
             className="raven-btn"
+            title="Add Image Block"
           >
-            + Image
+            <span className="raven-btn-short">+ Img</span>
+            <span className="raven-btn-long">+ Image</span>
           </button>
           <button
             type="button"
             onClick={() => addBlock("youtube")}
             className="raven-btn"
+            title="Add YouTube Video Block"
           >
-            + YouTube
+            <span className="raven-btn-short">+ YT</span>
+            <span className="raven-btn-long">+ YouTube</span>
           </button>
         </div>
       </div>
@@ -267,40 +285,68 @@ export function ChapterBlocksField(props: { path: string }) {
       {value.length === 0 ? (
         <div className="raven-empty-state">
           <p style={{ margin: "0 0 0.25rem 0", fontWeight: 600, fontSize: "0.875rem" }}>No blocks yet</p>
-          <p className="raven-subtitle">Add a Markdown, Image, or YouTube block above to start building chapter content.</p>
+          <p className="raven-subtitle">Use the sticky toolbar above to add a Markdown, Image, or YouTube block.</p>
         </div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-            <div className="raven-blocks-stack">
-              {value.map((row, index) => {
-                const rowId = ids[index];
-                return (
-                  <RowShell
-                    key={rowId}
-                    id={rowId}
-                    blockType={row.blockType}
-                    onRemove={() => removeAt(index)}
-                    onMoveUp={() => moveBlock(index, "up")}
-                    onMoveDown={() => moveBlock(index, "down")}
-                    isFirst={index === 0}
-                    isLast={index === value.length - 1}
-                  >
-                    {row.blockType === "markdown" && (
-                      <MarkdownRow row={row} onChange={(patch) => updateAt(index, patch)} />
-                    )}
-                    {row.blockType === "image" && (
-                      <ImageRow row={row} onChange={(patch) => updateAt(index, patch)} />
-                    )}
-                    {row.blockType === "youtube" && (
-                      <YoutubeRow row={row} onChange={(patch) => updateAt(index, patch)} />
-                    )}
-                  </RowShell>
-                );
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <>
+          <DndContext id="chapter-blocks-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+              <div className="raven-blocks-stack">
+                {value.map((row, index) => {
+                  const rowId = ids[index];
+                  return (
+                    <RowShell
+                      key={rowId}
+                      id={rowId}
+                      blockType={row.blockType}
+                      onRemove={() => removeAt(index)}
+                      onMoveUp={() => moveBlock(index, "up")}
+                      onMoveDown={() => moveBlock(index, "down")}
+                      isFirst={index === 0}
+                      isLast={index === value.length - 1}
+                    >
+                      {row.blockType === "markdown" && (
+                        <MarkdownRow row={row} onChange={(patch) => updateAt(index, patch)} />
+                      )}
+                      {row.blockType === "image" && (
+                        <ImageRow row={row} onChange={(patch) => updateAt(index, patch)} />
+                      )}
+                      {row.blockType === "youtube" && (
+                        <YoutubeRow row={row} onChange={(patch) => updateAt(index, patch)} />
+                      )}
+                    </RowShell>
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          {/* Bottom quick-add bar */}
+          <div className="raven-blocks-bottom-toolbar">
+            <span className="raven-subtitle" style={{ fontSize: "0.75rem", fontWeight: 500 }}>Append block:</span>
+            <button
+              type="button"
+              onClick={() => addBlock("markdown")}
+              className="raven-btn raven-btn-sm"
+            >
+              + Markdown
+            </button>
+            <button
+              type="button"
+              onClick={() => addBlock("image")}
+              className="raven-btn raven-btn-sm"
+            >
+              + Image
+            </button>
+            <button
+              type="button"
+              onClick={() => addBlock("youtube")}
+              className="raven-btn raven-btn-sm"
+            >
+              + YouTube
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

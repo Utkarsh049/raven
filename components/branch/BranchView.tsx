@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePinsStore } from "@/lib/pins-store";
 import { Breadcrumb } from "@/components/Breadcrumb";
@@ -12,10 +12,44 @@ interface BranchViewProps {
   years: Array<{ slug: string; title: string }>;
 }
 
+function getInitialBranchTab(): "browse" | "pinned" {
+  if (typeof window === "undefined") return "browse";
+  const params = new URLSearchParams(window.location.search);
+  const tabParam = params.get("tab");
+  if (tabParam === "pinned") return "pinned";
+  if (tabParam === "browse" || tabParam === "years") return "browse";
+  const saved = sessionStorage.getItem("raven_active_tab");
+  if (saved === "pinned") return "pinned";
+  return "browse";
+}
+
 export function BranchView({ branchSlug, branchTitle, years }: BranchViewProps) {
-  const [activeTab, setActiveTab] = useState<"browse" | "pinned">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "pinned">(getInitialBranchTab);
   const pins = usePinsStore((s) => s.pins);
   const togglePin = usePinsStore((s) => s.toggle);
+
+  // Sync tab state with browser back/forward history (popstate)
+  useEffect(() => {
+    const onPopState = () => {
+      setActiveTab(getInitialBranchTab());
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const handleTabChange = (tab: "browse" | "pinned") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("raven_active_tab", tab);
+      const url = new URL(window.location.href);
+      if (tab === "pinned") {
+        url.searchParams.set("tab", "pinned");
+      } else {
+        url.searchParams.delete("tab");
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
 
   return (
     <main id="main-content" className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
@@ -38,7 +72,7 @@ export function BranchView({ branchSlug, branchTitle, years }: BranchViewProps) 
         <div className="inline-flex self-start sm:self-auto p-1 rounded-xl bg-muted/80 border">
           <button
             type="button"
-            onClick={() => setActiveTab("browse")}
+            onClick={() => handleTabChange("browse")}
             className={`inline-flex items-center px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
               activeTab === "browse"
                 ? "bg-background text-foreground shadow-xs font-semibold"
@@ -49,7 +83,7 @@ export function BranchView({ branchSlug, branchTitle, years }: BranchViewProps) 
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("pinned")}
+            onClick={() => handleTabChange("pinned")}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
               activeTab === "pinned"
                 ? "bg-background text-foreground shadow-xs font-semibold"
@@ -126,9 +160,14 @@ export function BranchView({ branchSlug, branchTitle, years }: BranchViewProps) 
                   className="group relative flex flex-col justify-between rounded-2xl border bg-card p-4 sm:p-5 shadow-xs transition-all hover:bg-accent/50 hover:border-border/80 hover:shadow-md"
                 >
                   <div className="min-w-0 pr-6">
-                    <span className="inline-block rounded bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                      {pin.kind}
-                    </span>
+                    <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                      <span className="inline-block rounded bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {pin.kind}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        Offline Ready
+                      </span>
+                    </div>
                     <Link
                       href={pin.href}
                       className="block text-sm sm:text-base font-semibold text-foreground hover:underline line-clamp-2 break-words"

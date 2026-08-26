@@ -54,7 +54,6 @@ export const Nodes: CollectionConfig = {
   admin: {
     useAsTitle: "title",
     defaultColumns: ["title", "type", "slug", "status", "orderIndex"],
-    group: "Taxonomy",
   },
   access: {
     read: ({ req }) => {
